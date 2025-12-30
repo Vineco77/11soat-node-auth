@@ -4,6 +4,11 @@ on:
   pull_request:
     branches: [main, master]  # ⭐ SÓ EM PRs PARA MAIN/MASTER ⭐
 
+permissions:
+  contents: read       # Permissão padrão para fazer checkout do código
+  pull-requests: write # ⭐ PERMISSÃO CRÍTICA: para criar comentários no PR
+  issues: write        # Pode ser necessária em alguns casos
+
 env:
   MIN_COVERAGE: 80  # ⭐ 80% conforme requisito do professor ⭐
   IGNORE_PATTERNS: "**/*.dto.ts,**/*.enum.ts,**/value-objects/**,**/*.interface.ts,**/main.ts,**/index.ts,**/*.config.ts,**/migrations/**,**/seeders/**,**/*.module.ts"
