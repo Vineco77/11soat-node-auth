@@ -4,30 +4,26 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   
-  // ⭐ CORREÇÃO: Focar apenas no diretório src
-  roots: ['<rootDir>/src'],
+  // ⭐ SUAS PASTAS REAIS
+  roots: ['<rootDir>/src', '<rootDir>/libs/auth-lib/src'],
   
-  // ⭐ CORREÇÃO: Padrões mais específicos
   testMatch: [
     '<rootDir>/src/**/*.spec.ts',
     '<rootDir>/src/**/*.test.ts',
-    '<rootDir>/src/__tests__/**/*.ts'
+    '<rootDir>/libs/auth-lib/src/**/*.spec.ts',
+    '<rootDir>/libs/auth-lib/src/**/*.test.ts',
+    '<rootDir>/libs/auth-lib/test/**/*.spec.ts',
+    '<rootDir>/libs/auth-lib/test/**/*.test.ts'
   ],
   
   collectCoverage: true,
   
-  // ⭐ CORREÇÃO: Coletar apenas de src, não de todas as pastas
+  // ⭐ COBERTURA APENAS DAS SUAS PASTAS REAIS
   collectCoverageFrom: [
     'src/**/*.ts',
-    // ⭐ REMOVA estas linhas se não existem essas pastas:
-    // 'app/**/*.ts',
-    // 'lib/**/*.ts',
-    // 'core/**/*.ts',
-    // 'domain/**/*.ts',
-    // 'application/**/*.ts',
-    // 'infrastructure/**/*.ts',
+    'libs/auth-lib/src/**/*.ts',
     
-    // EXCLUSÕES
+    // Exclusões
     '!**/*.dto.ts',
     '!**/*.enum.ts',
     '!**/value-objects/**',
@@ -37,17 +33,14 @@ module.exports = {
     '!**/*.module.ts',
     '!**/app.module.ts',
     '!**/*.config.ts',
-    '!**/migrations/**',
-    '!**/seeders/**',
+    '!prisma/migrations/**',
     '!**/node_modules/**',
     '!**/*.spec.ts',
     '!**/*.test.ts',
-    '!**/__tests__/**/*.ts'
+    '!**/test/**'
   ],
   
   coverageDirectory: 'coverage',
-  
-  // ⭐ CORREÇÃO: Mantenha apenas o essencial
   coverageReporters: ['json-summary', 'lcov', 'text'],
   
   coverageThreshold: {
@@ -61,16 +54,25 @@ module.exports = {
   
   reporters: ['default'],
   
-  // ⭐ CORREÇÃO: Simplifique
-  moduleDirectories: ['node_modules', 'src'],
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  // ⭐ IMPORTANTE: Ignorar pastas que não são código
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/prisma/migrations/',
+    '/coverage/'
+  ],
   
-  // ⭐ CORREÇÃO: Verifique se precisa destes mapeamentos
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/prisma/migrations/',
+    '/coverage/',
+    '/test/'
+  ],
+  
+  // ⭐ Mapeamento de módulos para seu projeto
   moduleNameMapper: {
-    '^src/(.*)$': '<rootDir>/src/$1'
-  },
-  
-  // ⭐ ADICIONE: Para melhor performance
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/']
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@libs/(.*)$': '<rootDir>/libs/$1'
+  }
 };
