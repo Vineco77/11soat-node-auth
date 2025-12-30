@@ -4,28 +4,30 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   
-  // Detectar automaticamente as pastas de teste
-  roots: ['<rootDir>'],
+  // ⭐ CORREÇÃO: Focar apenas no diretório src
+  roots: ['<rootDir>/src'],
+  
+  // ⭐ CORREÇÃO: Padrões mais específicos
   testMatch: [
-    '**/__tests__/**/*.ts',
-    '**/*.spec.ts',
-    '**/*.test.ts',
-    '**/test/**/*.ts'
+    '<rootDir>/src/**/*.spec.ts',
+    '<rootDir>/src/**/*.test.ts',
+    '<rootDir>/src/__tests__/**/*.ts'
   ],
   
   collectCoverage: true,
   
-  // COLETAR COBERTURA DE TODAS AS PASTAS POSSÍVEIS
+  // ⭐ CORREÇÃO: Coletar apenas de src, não de todas as pastas
   collectCoverageFrom: [
     'src/**/*.ts',
-    'app/**/*.ts',
-    'lib/**/*.ts',
-    'core/**/*.ts',
-    'domain/**/*.ts',
-    'application/**/*.ts',
-    'infrastructure/**/*.ts',
+    // ⭐ REMOVA estas linhas se não existem essas pastas:
+    // 'app/**/*.ts',
+    // 'lib/**/*.ts',
+    // 'core/**/*.ts',
+    // 'domain/**/*.ts',
+    // 'application/**/*.ts',
+    // 'infrastructure/**/*.ts',
     
-    // EXCLUSÕES (arquivos que NÃO precisam de cobertura)
+    // EXCLUSÕES
     '!**/*.dto.ts',
     '!**/*.enum.ts',
     '!**/value-objects/**',
@@ -38,23 +40,16 @@ module.exports = {
     '!**/migrations/**',
     '!**/seeders/**',
     '!**/node_modules/**',
-    '!**/test/**',
     '!**/*.spec.ts',
-    '!**/*.test.ts'
+    '!**/*.test.ts',
+    '!**/__tests__/**/*.ts'
   ],
   
   coverageDirectory: 'coverage',
   
-  // RELATÓRIOS DETALHADOS
-  coverageReporters: [
-    'json-summary',  // Para análise programática
-    'lcov',          // Para SonarQube
-    'text',          // Para console
-    'html',          // Para relatório HTML
-    'json'           // Para análise detalhada
-  ],
+  // ⭐ CORREÇÃO: Mantenha apenas o essencial
+  coverageReporters: ['json-summary', 'lcov', 'text'],
   
-  // THRESHOLD GLOBAL DE 80%
   coverageThreshold: {
     global: {
       branches: 80,
@@ -64,23 +59,18 @@ module.exports = {
     }
   },
   
-  reporters: [
-    'default',
-    ['jest-sonar', {
-      outputDirectory: '.',
-      outputName: 'test-report.xml',
-      reportedFilePath: 'relative'
-    }]
-  ],
+  reporters: ['default'],
   
-  // DETECTAR ESTRUTURA AUTOMATICAMENTE
-  moduleDirectories: ['node_modules', 'src', 'app', 'lib'],
+  // ⭐ CORREÇÃO: Simplifique
+  moduleDirectories: ['node_modules', 'src'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   
-  // MAPEAMENTO DE CAMINHOS (ajuste conforme necessário)
+  // ⭐ CORREÇÃO: Verifique se precisa destes mapeamentos
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@app/(.*)$': '<rootDir>/app/$1',
-    '^@lib/(.*)$': '<rootDir>/lib/$1'
-  }
+    '^src/(.*)$': '<rootDir>/src/$1'
+  },
+  
+  // ⭐ ADICIONE: Para melhor performance
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/']
 };
