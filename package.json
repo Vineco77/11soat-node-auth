@@ -21,7 +21,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
+    "docker:down": "docker-compose down --rmi all -v --remove-orphans",
     "test:coverage": "jest --coverage --coverageReporters=lcov",
     "sonar": "sonar-scanner"
   },
