@@ -9,7 +9,6 @@ note.txt
 *.zip
 cognito-policy.json
 test-report.xml
-coverage/*
 dist/*
 .vscode/*
 .npmrc
