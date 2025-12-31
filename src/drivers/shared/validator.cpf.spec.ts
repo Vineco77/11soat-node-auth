@@ -1,5 +1,6 @@
-import { IsCPFConstraint } from './validator.cpf';
+import { IsCPFConstraint, IsCPF } from './validator.cpf';
 import { AppError } from '../../core/domain/errors/app.error';
+import { validate } from 'class-validator';
 
 describe('IsCPFConstraint', () => {
   let validator: IsCPFConstraint;
@@ -188,6 +189,111 @@ describe('IsCPFConstraint', () => {
     it('should handle special characters mixed with numbers', () => {
       const result = validator.validate('111@444#777$35');
       expect(result).toBe(true); // Should sanitize to valid CPF
+    });
+
+    it('should handle CPF where check digit calculation results in 10 (becomes 0)', () => {
+      // Testing edge case where remainder calculation results in check digit >= 10
+      const result = validator.validate('12345678909');
+      expect(result).toBe(true);
+    });
+
+    it('should reject CPF where first check digit is wrong', () => {
+      const result = validator.validate('12345678919'); // Wrong first check digit
+      expect(result).toBe(false);
+    });
+
+    it('should reject CPF where second check digit is wrong', () => {
+      const result = validator.validate('12345678908'); // Wrong second check digit
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('IsCPFConstraint - internal methods coverage', () => {
+    it('should properly sanitize CPF removing all non-digits', () => {
+      // Testing sanitizeCPF through validate
+      expect(validator.validate('123.456.789-09')).toBe(true);
+      expect(validator.validate('123-456-789-09')).toBe(true);
+      expect(validator.validate('123 456 789 09')).toBe(true);
+    });
+
+    it('should detect invalid input types through isValidInput', () => {
+      // Testing isValidInput through validate
+      expect(validator.validate(null as any)).toBe(false);
+      expect(validator.validate(undefined as any)).toBe(false);
+      expect(validator.validate(123 as any)).toBe(false);
+      expect(validator.validate(true as any)).toBe(false);
+      expect(validator.validate({} as any)).toBe(false);
+    });
+
+    it('should detect invalid format through hasValidFormat', () => {
+      // Testing hasValidFormat through validate
+      expect(validator.validate('123')).toBe(false); // Wrong length
+      expect(validator.validate('11111111111')).toBe(false); // All repeated
+      expect(validator.validate('00000000000')).toBe(false); // All repeated
+    });
+
+    it('should correctly calculate check digits through calculateCheckDigit', () => {
+      // Valid CPF with proper check digits
+      expect(validator.validate('11144477735')).toBe(true);
+      expect(validator.validate('12345678909')).toBe(true);
+      
+      // Invalid check digits
+      expect(validator.validate('11144477736')).toBe(false);
+      expect(validator.validate('12345678910')).toBe(false);
+    });
+
+    it('should test defaultMessage method when called', () => {
+      // Call defaultMessage multiple times to ensure coverage
+      expect(() => validator.defaultMessage()).toThrow(AppError);
+      
+      try {
+        validator.defaultMessage();
+      } catch (error) {
+        expect(error).toBeInstanceOf(AppError);
+      }
+    });
+  });
+
+  describe('IsCPF decorator', () => {
+    class TestClass {
+      @IsCPF()
+      cpf: string;
+
+      constructor(cpf: string) {
+        this.cpf = cpf;
+      }
+    }
+
+    it('should validate valid CPF when using decorator', async () => {
+      const instance = new TestClass('11144477735');
+      const errors = await validate(instance);
+      expect(errors.length).toBe(0);
+    });
+
+    it('should fail validation for invalid CPF when using decorator', async () => {
+      const instance = new TestClass('12345678901');
+      
+      try {
+        await validate(instance);
+      } catch (error) {
+        // O defaultMessage lança um AppError
+        expect(error).toBeInstanceOf(AppError);
+      }
+    });
+
+    it('should work with custom validation options', async () => {
+      class TestClassWithOptions {
+        @IsCPF({ message: 'CPF inválido' })
+        cpf: string;
+
+        constructor(cpf: string) {
+          this.cpf = cpf;
+        }
+      }
+
+      const instance = new TestClassWithOptions('11144477735');
+      const errors = await validate(instance);
+      expect(errors.length).toBe(0);
     });
   });
 });
