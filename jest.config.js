@@ -4,26 +4,22 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   
-  // ⭐ SUAS PASTAS REAIS
   roots: ['<rootDir>/src', '<rootDir>/libs/auth-lib/src'],
   
   testMatch: [
     '<rootDir>/src/**/*.spec.ts',
     '<rootDir>/src/**/*.test.ts',
     '<rootDir>/libs/auth-lib/src/**/*.spec.ts',
-    '<rootDir>/libs/auth-lib/src/**/*.test.ts',
-    '<rootDir>/libs/auth-lib/test/**/*.spec.ts',
-    '<rootDir>/libs/auth-lib/test/**/*.test.ts'
+    '<rootDir>/libs/auth-lib/src/**/*.test.ts'
   ],
   
   collectCoverage: true,
   
-  // ⭐ COBERTURA APENAS DAS SUAS PASTAS REAIS
   collectCoverageFrom: [
     'src/**/*.ts',
     'libs/auth-lib/src/**/*.ts',
     
-    // Exclusões
+    // Exclusões - arquivos que NÃO exigem 80%
     '!**/*.dto.ts',
     '!**/*.enum.ts',
     '!**/value-objects/**',
@@ -44,7 +40,13 @@ module.exports = {
   coverageReporters: ['json-summary', 'lcov', 'text'],
   
   coverageThreshold: {
-    global: {
+    './src/**/*.ts': {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
+    './libs/auth-lib/src/**/*.ts': {
       branches: 80,
       functions: 80,
       lines: 80,
@@ -54,23 +56,9 @@ module.exports = {
   
   reporters: ['default'],
   
-  // ⭐ IMPORTANTE: Ignorar pastas que não são código
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    '/prisma/migrations/',
-    '/coverage/'
-  ],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/'],
   
-  coveragePathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    '/prisma/migrations/',
-    '/coverage/',
-    '/test/'
-  ],
-  
-  // ⭐ Mapeamento de módulos para seu projeto
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@libs/(.*)$': '<rootDir>/libs/$1'
