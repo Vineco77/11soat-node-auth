@@ -75,7 +75,9 @@ describe('HttpException', () => {
       
       expect(exception.stack).toBeDefined();
       expect(typeof exception.stack).toBe('string');
-      expect(exception.stack.length).toBeGreaterThan(0);
+      if (exception.stack) {
+        expect(exception.stack.length).toBeGreaterThan(0);
+      }
     });
 
     it('should handle different status codes', () => {

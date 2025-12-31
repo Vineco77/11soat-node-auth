@@ -4,11 +4,12 @@ on:
   pull_request:
     branches: [main, master]
 
-# ⭐ PERMISSÕES CRÍTICAS para comentar em PRs
+# ⭐ PERMISSÕES CRÍTICAS para comentar em PRs e reportar status checks
 permissions:
   contents: read
   pull-requests: write
   issues: write
+  checks: write  # ⭐ ADICIONADO: Permissão para reportar status checks
 
 env:
   MIN_COVERAGE: 80
@@ -18,6 +19,15 @@ jobs:
   build-and-test:
     name: 🏗️ Build & Test
     runs-on: ubuntu-latest
+    
+    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    
+    # ⭐ CONFIGURAÇÃO DE TIMEOUT
+    timeout-minutes: 15
     
     steps:
       - name: 📥 Checkout code
@@ -52,11 +62,30 @@ jobs:
             ls -la coverage/ 2>/dev/null || echo "No coverage directory"
             exit 1
           fi
+          
+      # ⭐ ADICIONADO: Step para confirmar conclusão do job
+      - name: ✅ Report job completion
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Job 'build-and-test' completed successfully"
+          else
+            echo "❌ Job 'build-and-test' failed"
+          fi
 
   verify-coverage-per-file:
     name: 🔬 Verify 80% Coverage PER FILE
     needs: build-and-test
     runs-on: ubuntu-latest
+    
+    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    
+    # ⭐ CONFIGURAÇÃO DE TIMEOUT
+    timeout-minutes: 10
     
     outputs:
       coverage_passed: ${{ steps.check-coverage.outputs.passed }}
@@ -255,11 +284,11 @@ jobs:
               }, null, 2)
             );
             
-            // Definir outputs
-            console.log(\`::set-output name=passed::false\`);
-            console.log(\`::set-output name=failed_files::\${failedFilesList}\`);
-            console.log(\`::set-output name=failed_count::\${results.failed.length}\`);
-            console.log(\`::set-output name=coverage_summary::\${JSON.stringify(results.summary)}\`);
+            // Definir outputs (usando formato novo do GitHub Actions)
+            console.log('passed=false' >> $GITHUB_OUTPUT);
+            console.log(\`failed_files=\${failedFilesList}\` >> $GITHUB_OUTPUT);
+            console.log(\`failed_count=\${results.failed.length}\` >> $GITHUB_OUTPUT);
+            console.log(\`coverage_summary=\${JSON.stringify(results.summary)}\` >> $GITHUB_OUTPUT);
             
             process.exit(1);
             
@@ -293,11 +322,11 @@ jobs:
               }, null, 2)
             );
             
-            // Definir outputs
-            console.log(\`::set-output name=passed::true\`);
-            console.log(\`::set-output name=failed_files::\`);
-            console.log(\`::set-output name=failed_count::0\`);
-            console.log(\`::set-output name=coverage_summary::\${JSON.stringify(results.summary)}\`);
+            // Definir outputs (usando formato novo do GitHub Actions)
+            console.log('passed=true' >> $GITHUB_OUTPUT);
+            console.log('failed_files=' >> $GITHUB_OUTPUT);
+            console.log('failed_count=0' >> $GITHUB_OUTPUT);
+            console.log(\`coverage_summary=\${JSON.stringify(results.summary)}\` >> $GITHUB_OUTPUT);
           }
           "
           
@@ -310,14 +339,33 @@ jobs:
             coverage/
             coverage-per-file-results.json
           retention-days: 30
+          
+      # ⭐ ADICIONADO: Step para confirmar conclusão do job
+      - name: ✅ Report job completion
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Job 'verify-coverage-per-file' completed successfully"
+          else
+            echo "❌ Job 'verify-coverage-per-file' failed"
+          fi
 
   sonarqube-analysis:
     name: 📡 SonarQube Analysis
     needs: verify-coverage-per-file
     runs-on: ubuntu-latest
     
+    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    
     # ⭐ CRÍTICO: Só executa se TODOS os arquivos tiverem ≥80%
     if: needs.verify-coverage-per-file.outputs.coverage_passed == 'true'
+    
+    # ⭐ CONFIGURAÇÃO DE TIMEOUT
+    timeout-minutes: 10
     
     steps:
       - name: 📥 Checkout code
@@ -355,11 +403,27 @@ jobs:
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
             -Dsonar.analysis.detectedBranch=true
+            
+      # ⭐ ADICIONADO: Step para confirmar conclusão do job
+      - name: ✅ Report job completion
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Job 'sonarqube-analysis' completed successfully"
+          else
+            echo "❌ Job 'sonarqube-analysis' failed"
+          fi
 
   block-pr-on-failure:
     name: 🚫 Block PR - Insufficient File Coverage
     needs: verify-coverage-per-file
     runs-on: ubuntu-latest
+    
+    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
     
     # ⭐ Só executa se a validação por arquivo FALHOU
     if: |
@@ -469,6 +533,12 @@ jobs:
     needs: [verify-coverage-per-file, sonarqube-analysis]
     runs-on: ubuntu-latest
     
+    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    
     # Só executa se for PR e todas as validações passaram
     if: |
       github.event_name == 'pull_request' &&
@@ -535,3 +605,13 @@ jobs:
           echo "Overall coverage: ${{ needs.verify-coverage-per-file.outputs.coverage_summary.overallCoverage || 'N/A' }}%"
           echo ""
           echo "🚀 Ready to merge! 🚀"
+          
+      # ⭐ ADICIONADO: Step para confirmar conclusão do job
+      - name: ✅ Report final validation completion
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Job 'final-validation' completed successfully"
+          else
+            echo "❌ Job 'final-validation' failed"
+          fi
