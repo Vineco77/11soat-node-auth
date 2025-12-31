@@ -435,7 +435,7 @@ jobs:
           fi
 
   block-pr-on-failure:
-    name: 🚫 Block PR - Insufficient File Coverage
+    name: 🚫 Block PR IF Insufficient File Coverage
     needs: verify-coverage-per-file
     runs-on: ubuntu-latest
     
