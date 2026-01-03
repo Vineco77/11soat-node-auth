@@ -48,6 +48,7 @@ describe('JwtService', () => {
       cpf: '12345678901',
       user_type: 'cliente',
       name: 'John Doe',
+      email: 'john.doe@example.com',
     };
 
     it('should create a JWT token successfully', async () => {
@@ -73,6 +74,7 @@ describe('JwtService', () => {
         cpf: '98765432109',
         user_type: 'funcionario',
         name: 'Jane Employee',
+        email: 'jane.employee@company.com',
       };
 
       const mockToken = 'employee.jwt.token';
@@ -260,6 +262,7 @@ describe('JwtService', () => {
       cpf: '12345678901',
       user_type: 'cliente',
       name: 'John Doe',
+      email: 'john.doe@example.com',
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 900,
     };

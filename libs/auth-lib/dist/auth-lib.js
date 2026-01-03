@@ -12,7 +12,6 @@ class AuthLib {
     decodeToken(token) {
         return this.jwtService.decodeToken(token);
     }
-    // Método opcional para criar tokens (se outros serviços precisarem)
     async createToken(payload) {
         return await this.jwtService.createToken(payload);
     }

@@ -4,12 +4,11 @@ on:
   pull_request:
     branches: [main, master]
 
-# ⭐ PERMISSÕES CRÍTICAS para comentar em PRs e reportar status checks
 permissions:
   contents: read
   pull-requests: write
   issues: write
-  checks: write  # ⭐ ADICIONADO: Permissão para reportar status checks
+  checks: write  
 
 env:
   MIN_COVERAGE: 80
@@ -20,13 +19,11 @@ jobs:
     name: 🏗️ Build & Test
     runs-on: ubuntu-latest
     
-    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
     permissions:
       contents: read
       pull-requests: write
       checks: write
     
-    # ⭐ CONFIGURAÇÃO DE TIMEOUT
     timeout-minutes: 15
     
     steps:
@@ -45,7 +42,7 @@ jobs:
         run: npm ci
         
       - name: 🏗️ Build application
-        run: npm run build  # ou o comando de build do seu projeto
+        run: npm run build  
         
       - name: 🧪 Run tests with coverage
         id: run-tests
@@ -63,7 +60,6 @@ jobs:
             exit 1
           fi
           
-      # ⭐ ADICIONADO: Step para confirmar conclusão do job
       - name: ✅ Report job completion
         if: always()
         run: |
@@ -78,13 +74,11 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     
-    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
     permissions:
       contents: read
       pull-requests: write
       checks: write
     
-    # ⭐ CONFIGURAÇÃO DE TIMEOUT
     timeout-minutes: 10
     
     outputs:
@@ -360,7 +354,6 @@ jobs:
             coverage-per-file-results.json
           retention-days: 30
           
-      # ⭐ ADICIONADO: Step para confirmar conclusão do job
       - name: ✅ Report job completion
         if: always()
         run: |
@@ -375,16 +368,13 @@ jobs:
     needs: verify-coverage-per-file
     runs-on: ubuntu-latest
     
-    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
     permissions:
       contents: read
       pull-requests: write
       checks: write
     
-    # ⭐ CRÍTICO: Só executa se TODOS os arquivos tiverem ≥80%
     if: needs.verify-coverage-per-file.outputs.coverage_passed == 'true'
     
-    # ⭐ CONFIGURAÇÃO DE TIMEOUT
     timeout-minutes: 10
     
     steps:
@@ -424,7 +414,6 @@ jobs:
             -Dsonar.pullrequest.base=${{ github.base_ref }}
             -Dsonar.analysis.detectedBranch=true
             
-      # ⭐ ADICIONADO: Step para confirmar conclusão do job
       - name: ✅ Report job completion
         if: always()
         run: |
@@ -439,13 +428,11 @@ jobs:
     needs: verify-coverage-per-file
     runs-on: ubuntu-latest
     
-    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
     permissions:
       contents: read
       pull-requests: write
       checks: write
     
-    # ⭐ Só executa se a validação por arquivo FALHOU
     if: |
       github.event_name == 'pull_request' && 
       needs.verify-coverage-per-file.outputs.coverage_passed == 'false'
@@ -553,13 +540,11 @@ jobs:
     needs: [verify-coverage-per-file, sonarqube-analysis]
     runs-on: ubuntu-latest
     
-    # ⭐ PERMISSÕES ESPECÍFICAS DO JOB
     permissions:
       contents: read
       pull-requests: write
       checks: write
     
-    # Só executa se for PR e todas as validações passaram
     if: |
       github.event_name == 'pull_request' &&
       needs.verify-coverage-per-file.result == 'success' &&
@@ -626,7 +611,6 @@ jobs:
           echo ""
           echo "🚀 Ready to merge! 🚀"
           
-      # ⭐ ADICIONADO: Step para confirmar conclusão do job
       - name: ✅ Report final validation completion
         if: always()
         run: |

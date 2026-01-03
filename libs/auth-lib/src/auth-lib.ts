@@ -16,7 +16,6 @@ export class AuthLib {
     return this.jwtService.decodeToken(token);
   }
 
-  // Método opcional para criar tokens (se outros serviços precisarem)
   async createToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): Promise<string> {
     return await this.jwtService.createToken(payload);
   }

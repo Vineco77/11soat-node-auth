@@ -50,6 +50,7 @@ describe('AuthLib', () => {
                 cpf: '98765432109',
                 user_type: 'funcionario',
                 name: 'Jane Employee',
+                email: 'jane.employee@company.com',
                 iat: Math.floor(Date.now() / 1000),
                 exp: Math.floor(Date.now() / 1000) + 900,
             };
@@ -102,6 +103,7 @@ describe('AuthLib', () => {
             cpf: '12345678901',
             user_type: 'cliente',
             name: 'John Doe',
+            email: 'john.doe@example.com',
             iat: Math.floor(Date.now() / 1000),
             exp: Math.floor(Date.now() / 1000) + 900,
         };
@@ -162,6 +164,7 @@ describe('AuthLib', () => {
             cpf: '12345678901',
             user_type: 'cliente',
             name: 'John Doe',
+            email: 'john.doe@example.com',
         };
         it('should create token successfully', async () => {
             const mockToken = 'generated.jwt.token';
@@ -176,6 +179,7 @@ describe('AuthLib', () => {
                 cpf: '98765432109',
                 user_type: 'funcionario',
                 name: 'Jane Employee',
+                email: 'jane.employee@company.com',
             };
             const mockToken = 'employee.jwt.token';
             mockJwtService.createToken = jest.fn().mockResolvedValue(mockToken);
@@ -220,6 +224,7 @@ describe('AuthLib', () => {
                 cpf: '12345678901',
                 user_type: 'cliente',
                 name: 'Test User',
+                email: 'test.user@example.com',
             };
             const mockToken = 'test.token';
             mockJwtService.createToken = jest.fn().mockResolvedValue(mockToken);
@@ -248,6 +253,7 @@ describe('AuthLib', () => {
                 cpf: '12345678901',
                 user_type: 'funcionario',
                 name: 'Employee',
+                email: 'employee@company.com',
             };
             mockJwtService.createToken = jest.fn()
                 .mockResolvedValueOnce('client.token')
