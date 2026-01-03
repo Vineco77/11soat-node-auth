@@ -17,6 +17,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '',
                 user_type: 'cliente',
                 name: 'João Silva',
+                email: 'joao.silva@example.com',
             };
             const token = await jwtService.createToken(customerPayload);
             expect(token).toBeDefined();
@@ -33,6 +34,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '12345678901',
                 user_type: 'cliente',
                 name: 'Maria Santos',
+                email: 'maria.santos@example.com',
             };
             const token = await jwtService.createToken(customerPayload);
             const decoded = jwtService.decodeToken(token);
@@ -47,6 +49,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '98765432109',
                 user_type: 'funcionario',
                 name: 'Carlos Funcionário',
+                email: 'carlos.funcionario@company.com',
             };
             const token = await jwtService.createToken(employeePayload);
             expect(token).toBeDefined();
@@ -66,6 +69,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '11111111111',
                 user_type: 'cliente',
                 name: 'Shared User',
+                email: 'shared.user@example.com',
             };
             const token = await authLib1.createToken(payload);
             const decoded1 = authLib1.decodeToken(token);
@@ -92,6 +96,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '33333333333',
                 user_type: 'funcionario',
                 name: 'Ana Employee',
+                email: 'ana.employee@company.com',
             };
             const token = await authLib.createToken(payload);
             const decoded = authLib.decodeToken(token);
@@ -100,6 +105,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '33333333333',
                 user_type: 'funcionario',
                 name: 'Ana Employee',
+                email: 'ana.employee@company.com',
             });
             expect(decoded?.iat).toBeDefined();
             expect(decoded?.exp).toBeDefined();
@@ -180,6 +186,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '99999999999',
                 user_type: 'cliente',
                 name: 'Cliente Premium',
+                email: 'cliente.premium@example.com',
             };
             const token = await authLib.createToken(registeredCustomer);
             const decoded = authLib.decodeToken(token);
@@ -192,6 +199,7 @@ describe('Auth-Lib Integration Tests', () => {
                 cpf: '88888888888',
                 user_type: 'funcionario',
                 name: 'Gerente Admin',
+                email: 'gerente.admin@company.com',
             };
             const token = await authLib.createToken(employee);
             const decoded = authLib.decodeToken(token);

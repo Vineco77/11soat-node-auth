@@ -15,12 +15,11 @@ describe('index exports', () => {
   });
 
   it('should export JwtPayload interface type', () => {
-    // JwtPayload is a type, so we can't test it directly
-    // but we can verify the module exports are accessible
     const payload: JwtPayload = {
       sub: 'test',
       cpf: '12345678901',
       user_type: 'cliente',
+      email: 'test@example.com',
     };
     
     expect(payload).toBeDefined();
