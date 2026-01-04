@@ -33,6 +33,7 @@ describe('AuthController', () => {
     it('should create token successfully for client without CPF', async () => {
       const dto: CreateJwtDto = {
         name: 'John Doe',
+        email: 'john.doe@example.com',
       };
 
       const mockToken = 'generated.jwt.token';
@@ -40,7 +41,7 @@ describe('AuthController', () => {
 
       const result = await controller.createToken(dto);
 
-      expect(createJwtUseCase.execute).toHaveBeenCalledWith(undefined, 'John Doe');
+      expect(createJwtUseCase.execute).toHaveBeenCalledWith(undefined, 'John Doe', 'john.doe@example.com');
       expect(result).toEqual({
         success: true,
         token: mockToken,
@@ -52,6 +53,7 @@ describe('AuthController', () => {
       const dto: CreateJwtDto = {
         cpf: '12345678901',
         name: 'Jane Doe',
+        email: 'jane.doe@example.com',
       };
 
       const mockToken = 'generated.jwt.token';
@@ -59,7 +61,7 @@ describe('AuthController', () => {
 
       const result = await controller.createToken(dto);
 
-      expect(createJwtUseCase.execute).toHaveBeenCalledWith('12345678901', 'Jane Doe');
+      expect(createJwtUseCase.execute).toHaveBeenCalledWith('12345678901', 'Jane Doe', 'jane.doe@example.com');
       expect(result).toEqual({
         success: true,
         token: mockToken,
@@ -77,7 +79,7 @@ describe('AuthController', () => {
 
       const result = await controller.createToken(dto);
 
-      expect(createJwtUseCase.execute).toHaveBeenCalledWith('12345678901', undefined);
+      expect(createJwtUseCase.execute).toHaveBeenCalledWith('12345678901', undefined, undefined);
       expect(result).toEqual({
         success: true,
         token: mockToken,
@@ -95,7 +97,7 @@ describe('AuthController', () => {
       mockCreateJwtUseCase.execute.mockRejectedValue(error);
 
       await expect(controller.createToken(dto)).rejects.toThrow(error);
-      expect(createJwtUseCase.execute).toHaveBeenCalledWith('invalid-cpf', 'Test User');
+      expect(createJwtUseCase.execute).toHaveBeenCalledWith('invalid-cpf', 'Test User', undefined);
     });
 
     it('should propagate internal server errors', async () => {
@@ -117,7 +119,7 @@ describe('AuthController', () => {
 
       const result = await controller.createToken(dto);
 
-      expect(createJwtUseCase.execute).toHaveBeenCalledWith(undefined, undefined);
+      expect(createJwtUseCase.execute).toHaveBeenCalledWith(undefined, undefined, undefined);
       expect(result.success).toBe(true);
     });
   });

@@ -18,4 +18,13 @@ export class CreateJwtDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiProperty({
+    description: 'Email do usuário (opcional)',
+    example: 'joao.silva@example.com',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  email?: string;
 }

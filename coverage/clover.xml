@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1767489616148" clover="3.2.0">
+  <project timestamp="1767489616148" name="All files">
+    <metrics statements="179" coveredstatements="156" conditionals="52" coveredconditionals="34" methods="43" coveredmethods="35" elements="274" coveredelements="225" complexity="0" loc="179" ncloc="179" packages="6" files="11" classes="11"/>
+    <package name="bdd.utils">
+      <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="paths.ts" path="/home/vinicius_ribeiro/11soat-node-auth/bdd/utils/paths.ts">
+        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="1" count="4" type="stmt"/>
+        <line num="3" count="4" type="stmt"/>
+        <line num="4" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="bdd.utils.factories">
+      <metrics statements="22" coveredstatements="19" conditionals="5" coveredconditionals="4" methods="7" coveredmethods="6"/>
+      <file name="user.factory.ts" path="/home/vinicius_ribeiro/11soat-node-auth/bdd/utils/factories/user.factory.ts">
+        <metrics statements="22" coveredstatements="19" conditionals="5" coveredconditionals="4" methods="7" coveredmethods="6"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="3" count="3" type="stmt"/>
+        <line num="5" count="81" type="stmt"/>
+        <line num="7" count="9" type="stmt"/>
+        <line num="8" count="9" type="stmt"/>
+        <line num="9" count="81" type="stmt"/>
+        <line num="11" count="9" type="stmt"/>
+        <line num="12" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="14" count="9" type="stmt"/>
+        <line num="15" count="9" type="stmt"/>
+        <line num="16" count="81" type="stmt"/>
+        <line num="18" count="9" type="stmt"/>
+        <line num="19" count="9" type="stmt"/>
+        <line num="20" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="22" count="9" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="32" count="0" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
+        <line num="37" count="6" type="stmt"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="58" count="3" type="stmt"/>
+      </file>
+    </package>
+    <package name="bdd.utils.mocks">
+      <metrics statements="55" coveredstatements="42" conditionals="13" coveredconditionals="7" methods="14" coveredmethods="9"/>
+      <file name="jwt-service.mock.ts" path="/home/vinicius_ribeiro/11soat-node-auth/bdd/utils/mocks/jwt-service.mock.ts">
+        <metrics statements="12" coveredstatements="4" conditionals="2" coveredconditionals="0" methods="5" coveredmethods="2"/>
+        <line num="3" count="2" type="stmt"/>
+        <line num="4" count="9" type="stmt"/>
+        <line num="6" count="4" type="stmt"/>
+        <line num="10" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="24" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="25" count="0" type="stmt"/>
+        <line num="31" count="0" type="stmt"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="37" count="0" type="stmt"/>
+      </file>
+      <file name="user-repository.mock.ts" path="/home/vinicius_ribeiro/11soat-node-auth/bdd/utils/mocks/user-repository.mock.ts">
+        <metrics statements="43" coveredstatements="38" conditionals="11" coveredconditionals="7" methods="9" coveredmethods="7"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="2" count="3" type="stmt"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="7" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="11" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="17" count="9" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="20" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="22" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="27" count="1" type="stmt"/>
+        <line num="28" count="10" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="31" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="36" count="3" type="stmt"/>
+        <line num="37" count="15" type="stmt"/>
+        <line num="39" count="15" type="stmt"/>
+        <line num="41" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="47" count="1" type="stmt"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="52" count="1" type="stmt"/>
+        <line num="53" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="57" count="1" type="stmt"/>
+        <line num="58" count="1" type="stmt"/>
+        <line num="62" count="0" type="stmt"/>
+        <line num="67" count="3" type="stmt"/>
+        <line num="68" count="3" type="stmt"/>
+        <line num="69" count="3" type="stmt"/>
+        <line num="71" count="3" type="stmt"/>
+        <line num="72" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="73" count="3" type="stmt"/>
+        <line num="75" count="0" type="stmt"/>
+        <line num="78" count="3" type="stmt"/>
+        <line num="81" count="3" type="stmt"/>
+        <line num="82" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.core.application.use-cases">
+      <metrics statements="58" coveredstatements="54" conditionals="26" coveredconditionals="19" methods="10" coveredmethods="10"/>
+      <file name="create-employee.use-case.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/application/use-cases/create-employee.use-case.ts">
+        <metrics statements="18" coveredstatements="16" conditionals="6" coveredconditionals="3" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="12" count="5" type="stmt"/>
+        <line num="14" count="5" type="stmt"/>
+        <line num="15" count="5" type="cond" truecount="0" falsecount="1"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="21" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="22" count="1" type="stmt"/>
+        <line num="27" count="3" type="stmt"/>
+        <line num="28" count="3" type="stmt"/>
+        <line num="29" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="38" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="39" count="0" type="stmt"/>
+      </file>
+      <file name="create-jwt.use-cases.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/application/use-cases/create-jwt.use-cases.ts">
+        <metrics statements="20" coveredstatements="20" conditionals="14" coveredconditionals="13" methods="4" coveredmethods="4"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="13" count="6" type="stmt"/>
+        <line num="15" count="6" type="stmt"/>
+        <line num="19" count="5" type="cond" truecount="3" falsecount="0"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="23" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="30" count="2" type="stmt"/>
+        <line num="32" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="34" count="2" type="stmt"/>
+        <line num="42" count="2" type="stmt"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="48" count="2" type="stmt"/>
+        <line num="50" count="2" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
+        <line num="60" count="2" type="stmt"/>
+        <line num="64" count="3" type="stmt"/>
+      </file>
+      <file name="delete-employee.use-case.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/application/use-cases/delete-employee.use-case.ts">
+        <metrics statements="16" coveredstatements="14" conditionals="6" coveredconditionals="3" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="11" count="4" type="stmt"/>
+        <line num="13" count="4" type="stmt"/>
+        <line num="14" count="4" type="cond" truecount="0" falsecount="1"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="20" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="36" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="37" count="0" type="stmt"/>
+      </file>
+      <file name="validate-jwt.use-case.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/application/use-cases/validate-jwt.use-case.ts">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="9" count="4" type="stmt"/>
+        <line num="13" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.core.domain.entities">
+      <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <file name="user.entity.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/domain/entities/user.entity.ts">
+        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="3" count="5" type="stmt"/>
+        <line num="4" count="5" type="stmt"/>
+        <line num="5" count="5" type="stmt"/>
+        <line num="12" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.core.domain.errors">
+      <metrics statements="36" coveredstatements="33" conditionals="8" coveredconditionals="4" methods="9" coveredmethods="7"/>
+      <file name="app.error.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/domain/errors/app.error.ts">
+        <metrics statements="11" coveredstatements="9" conditionals="2" coveredconditionals="0" methods="7" coveredmethods="5"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="9" count="3" type="stmt"/>
+        <line num="19" count="6" type="stmt"/>
+        <line num="28" count="6" type="stmt"/>
+        <line num="29" count="6" type="stmt"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="41" count="2" type="stmt"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="57" count="2" type="stmt"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="73" count="0" type="stmt"/>
+      </file>
+      <file name="http.exception.ts" path="/home/vinicius_ribeiro/11soat-node-auth/src/core/domain/errors/http.exception.ts">
+        <metrics statements="25" coveredstatements="24" conditionals="6" coveredconditionals="4" methods="2" coveredmethods="2"/>
+        <line num="8" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="9" count="3" type="stmt"/>
+        <line num="10" count="3" type="stmt"/>
+        <line num="11" count="3" type="stmt"/>
+        <line num="12" count="3" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="14" count="3" type="stmt"/>
+        <line num="15" count="3" type="stmt"/>
+        <line num="16" count="3" type="stmt"/>
+        <line num="17" count="3" type="stmt"/>
+        <line num="18" count="3" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="20" count="3" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="3" type="stmt"/>
+        <line num="23" count="3" type="stmt"/>
+        <line num="24" count="3" type="stmt"/>
+        <line num="25" count="3" type="stmt"/>
+        <line num="28" count="3" type="stmt"/>
+        <line num="33" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="35" count="6" type="stmt"/>
+        <line num="37" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="38" count="0" type="stmt"/>
+        <line num="43" count="6" type="stmt"/>
+        <line num="46" count="6" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

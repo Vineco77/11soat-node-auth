@@ -52,7 +52,7 @@ describe('CreateJwtUseCase', () => {
       it('should generate client token when CPF is not provided', async () => {
         jwtService.createToken.mockResolvedValue(validToken);
 
-        const result = await useCase.execute(undefined, 'John Doe');
+        const result = await useCase.execute(undefined, 'John Doe', 'john.doe@example.com');
 
         expect(result).toEqual({ token: validToken });
         expect(jwtService.createToken).toHaveBeenCalledWith(
@@ -61,6 +61,7 @@ describe('CreateJwtUseCase', () => {
             cpf: '',
             user_type: 'cliente',
             name: 'John Doe',
+            email: 'john.doe@example.com',
           })
         );
         expect(userRepository.findByCpf).not.toHaveBeenCalled();
@@ -69,7 +70,7 @@ describe('CreateJwtUseCase', () => {
       it('should generate client token when CPF is empty string', async () => {
         jwtService.createToken.mockResolvedValue(validToken);
 
-        const result = await useCase.execute('', 'Jane Doe');
+        const result = await useCase.execute('', 'Jane Doe', 'jane.doe@example.com');
 
         expect(result).toEqual({ token: validToken });
         expect(jwtService.createToken).toHaveBeenCalledWith(
@@ -78,6 +79,7 @@ describe('CreateJwtUseCase', () => {
             cpf: '',
             user_type: 'cliente',
             name: 'Jane Doe',
+            email: 'jane.doe@example.com',
           })
         );
         expect(userRepository.findByCpf).not.toHaveBeenCalled();
@@ -121,7 +123,7 @@ describe('CreateJwtUseCase', () => {
         userRepository.findByCpf.mockResolvedValue(employee);
         jwtService.createToken.mockResolvedValue(validToken);
 
-        const result = await useCase.execute(validCpf, 'Employee Name');
+        const result = await useCase.execute(validCpf, 'Employee Name', 'employee@company.com');
 
         expect(result).toEqual({ token: validToken });
         expect(userRepository.findByCpf).toHaveBeenCalledWith(validCpf);
@@ -131,6 +133,7 @@ describe('CreateJwtUseCase', () => {
             cpf: validCpf,
             user_type: 'funcionario',
             name: 'Employee Name',
+            email: 'employee@company.com',
           })
         );
       });
@@ -139,7 +142,7 @@ describe('CreateJwtUseCase', () => {
         userRepository.findByCpf.mockResolvedValue(null);
         jwtService.createToken.mockResolvedValue(validToken);
 
-        const result = await useCase.execute(validCpf, 'Client Name');
+        const result = await useCase.execute(validCpf, 'Client Name', 'client@example.com');
 
         expect(result).toEqual({ token: validToken });
         expect(userRepository.findByCpf).toHaveBeenCalledWith(validCpf);
@@ -149,6 +152,7 @@ describe('CreateJwtUseCase', () => {
             cpf: validCpf,
             user_type: 'cliente',
             name: 'Client Name',
+            email: 'client@example.com',
           })
         );
       });
