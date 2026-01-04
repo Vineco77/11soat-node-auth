@@ -48,7 +48,7 @@ jobs:
         id: run-tests
         run: |
           echo "Running tests with coverage..."
-          npm test -- --coverage --coverageReporters=json-summary --coverageReporters=lcov --coverageReporters=text
+          npm run test:coverage
           
           # Verifica se o lcov.info foi gerado
           if [ -f "coverage/lcov.info" ]; then
@@ -104,9 +104,8 @@ jobs:
         
       - name: 📊 Generate detailed coverage report
         run: |
-          npm test -- --coverage \
+          npm run test:coverage -- \
             --coverageReporters=json-summary \
-            --coverageReporters=lcov \
             --coverageReporters=text \
             --coverageReporters=html
 
@@ -255,7 +254,7 @@ jobs:
             
             console.log('🔧 AÇÕES NECESSÁRIAS:');
             console.log('1. Adicione testes para os arquivos acima');
-            console.log('2. Execute: npm test -- --coverage');
+            console.log('2. Execute: npm run test:coverage');
             console.log('3. Garanta que cada arquivo atinja 80%');
             console.log('4. Atualize este PR após corrigir\\n');
             
@@ -487,7 +486,7 @@ jobs:
             
             comment += `### 🔧 Como Resolver:\n`;
             comment += `1. **Adicione testes unitários** para cada arquivo listado acima\n`;
-            comment += `2. Execute localmente: \`npm test -- --coverage\`\n`;
+            comment += `2. Execute localmente: \`npm run test:coverage\`\n`;
             comment += `3. **Verifique se cada arquivo individual** atinge 80% de cobertura\n`;
             comment += `4. **Cobertura é calculada por:** Linhas + Statements + Functions + Branches\n`;
             comment += `5. Atualize este PR após corrigir\n\n`;
@@ -527,7 +526,7 @@ jobs:
           echo "PRÓXIMOS PASSOS:"
           echo "1. Verifique os arquivos listados no comentário do PR"
           echo "2. Adicione testes unitários para esses arquivos"
-          echo "3. Execute: npm test -- --coverage"
+          echo "3. Execute: npm run test:coverage"
           echo "4. Confirme que cada arquivo atinge 80%"
           echo "5. Atualize este PR"
           echo ""
