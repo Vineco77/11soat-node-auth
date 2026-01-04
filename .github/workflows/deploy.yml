@@ -14,13 +14,10 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: 'Environment'
         required: true
-        default: 'demo-5min'
-        type: choice
-        options:
-        - demo-5min
-        - staging
+        default: 'demo'
+        type: string
       branch:
         description: 'Branch to deploy'
         required: true
