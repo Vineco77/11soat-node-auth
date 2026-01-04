@@ -1,4 +1,4 @@
-# 🔐 Auth Service - Microserviço de Autenticação
+# 🔐 Auth Service - Microserviço de Autenticação.
 
 [![Coverage](https://img.shields.io/badge/coverage-99.61%25-brightgreen.svg)](./coverage/lcov-report/index.html)
 [![NestJS](https://img.shields.io/badge/NestJS-10.0-red.svg)](https://nestjs.com/)
