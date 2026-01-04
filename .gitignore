@@ -12,3 +12,8 @@ test-report.xml
 dist/*
 .vscode/*
 .npmrc
+
+# Coverage reports (gerados automaticamente)
+coverage/
+*.lcov
+.nyc_output/
