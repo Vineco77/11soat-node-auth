@@ -30,6 +30,7 @@ export class AuthController {
     const { token } = await this.createJwtUseCase.execute(
       createJwtDto.cpf,
       createJwtDto.name,
+      createJwtDto.email,
     );
 
     return {

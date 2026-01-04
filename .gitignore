@@ -12,3 +12,7 @@ test-report.xml
 dist/*
 .vscode/*
 .npmrc
+
+coverage/
+*.lcov
+.nyc_output/

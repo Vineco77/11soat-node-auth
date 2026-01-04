@@ -13,7 +13,7 @@ module.exports = {
     '<rootDir>/libs/auth-lib/src/**/*.test.ts'
   ],
   
-  collectCoverage: true,
+  maxWorkers: '50%',
   
   collectCoverageFrom: [
     'src/**/*.ts',

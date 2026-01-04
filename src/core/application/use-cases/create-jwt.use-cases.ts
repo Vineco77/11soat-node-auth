@@ -15,10 +15,9 @@ export class CreateJwtUseCase {
     private readonly userRepository: UserRepositoryInterface,
   ) {}
 
-  async execute(cpf?: string, name?: string): Promise<{ token: string }> {
-    // LÓGICA PRINCIPAL: Se CPF não for enviado ou for vazio → cliente
+  async execute(cpf?: string, name?: string, email?: string): Promise<{ token: string }> {
     if (!cpf || cpf.trim() === '') {
-      return this.generateClientToken(name);
+      return this.generateClientToken(name, email);
     }
 
     if (!this.isValidCpfFormat(cpf)) {
@@ -37,6 +36,7 @@ export class CreateJwtUseCase {
       cpf,
       user_type: userType,
       ...(name && { name }),
+      ...(email && { email }),
     };
 
     const token = await this.jwtService.createToken(payload);
@@ -44,7 +44,7 @@ export class CreateJwtUseCase {
     return { token };
   }
 
-  private async generateClientToken(name?: string): Promise<{ token: string }> {
+  private async generateClientToken(name?: string, email?: string): Promise<{ token: string }> {
     const temporaryId = `client_${uuidv4()}`;
     
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
@@ -52,6 +52,7 @@ export class CreateJwtUseCase {
       cpf: '', 
       user_type: 'cliente',
       ...(name && { name }),
+      ...(email && { email }),
     };
 
     const token = await this.jwtService.createToken(payload);

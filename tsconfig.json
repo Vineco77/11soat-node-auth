@@ -20,6 +20,7 @@
     "noFallthroughCasesInSwitch": false,
     "strict": true,
     "esModuleInterop": true,
+    "types": ["jest", "node"],
     "paths": {
       "src/*": ["./src/*"]
     }
