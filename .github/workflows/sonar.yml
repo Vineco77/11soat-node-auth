@@ -1,6 +1,7 @@
 name: SonarQube Analysis - 80% Coverage per File
 
 on:
+  workflow_call:
   pull_request:
     branches: [main, master]
 
