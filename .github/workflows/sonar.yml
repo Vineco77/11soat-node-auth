@@ -403,6 +403,26 @@ jobs:
         with:
           name: coverage-per-file-report-${{ github.sha }}
           path: coverage/
+
+      - name: 🔍 Debug - Check coverage files
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Coverage directory contents ==="
+          find . -name "*.info" -o -name "*.json" | grep -i coverage || echo "No coverage files found"
+          echo "=== Checking lcov.info ==="
+          if [ -f "coverage/lcov.info" ]; then
+            echo "✅ lcov.info exists at coverage/lcov.info"
+            echo "Size: $(wc -l < coverage/lcov.info) lines"
+            echo "=== First few lines of lcov.info ==="
+            head -5 coverage/lcov.info
+          else
+            echo "❌ lcov.info NOT FOUND at coverage/lcov.info"
+            echo "Looking for it elsewhere..."
+            find . -name "lcov.info" 2>/dev/null || echo "Not found anywhere"
+            echo "=== Listing coverage directory ==="
+            ls -la coverage/ 2>/dev/null || echo "coverage/ directory doesn't exist"
+          fi
           
       - name: 🔍 Run SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@master
