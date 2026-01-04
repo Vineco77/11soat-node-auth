@@ -356,7 +356,8 @@ jobs:
         with:
           name: coverage-per-file-report-${{ github.sha }}
           path: |
-            coverage/
+            coverage/lcov.info
+            coverage/coverage-summary.json
             coverage-per-file-results.json
           retention-days: 30
           
@@ -402,7 +403,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-per-file-report-${{ github.sha }}
-          path: coverage/
 
       - name: 🔍 Debug - Check coverage files
         run: |
