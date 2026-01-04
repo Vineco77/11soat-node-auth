@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:coverage": "jest --coverage --coverageReporters=lcov --maxWorkers=2",
+    "test:coverage": "jest --coverage --coverageReporters=json-summary --coverageReporters=lcov --coverageReporters=text --maxWorkers=2",
     "test:bdd": "jest --config jest-bdd.config.js",
     "test:bdd:watch": "jest --config jest-bdd.config.js --watch",
     "test:bdd:coverage": "jest --config jest-bdd.config.js --coverage",
