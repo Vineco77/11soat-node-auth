@@ -106,6 +106,22 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: 🏗️ Create ECR Repository if not exists
+        run: |
+          echo "🏗️ Checking if ECR repository exists..."
+          
+          # Verificar se o repositório já existe
+          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > /dev/null 2>&1; then
+            echo "✅ Repository already exists"
+          else
+            echo "📦 Creating ECR repository..."
+            aws ecr create-repository \
+              --repository-name ${{ env.ECR_REPOSITORY }} \
+              --image-tag-mutability MUTABLE \
+              --tags Key=Project,Value=Academic
+            echo "✅ Repository created successfully"
+          fi
+
       - name: 🏗️ Build Docker image
         id: build
         env:
