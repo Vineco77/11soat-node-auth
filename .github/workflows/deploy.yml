@@ -4,27 +4,27 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
-  
+
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to deploy'
+        description: "Branch to deploy"
         required: true
-        default: 'main'
+        default: "main"
         type: string
       confirm:
         description: 'Type "yes" to confirm deployment'
         required: true
         type: string
-        default: 'yes'
+        default: "yes"
 
 env:
-  AWS_REGION: 'us-east-1'
-  ECR_REPOSITORY: 'auth-service'
-  ECS_CLUSTER: 'auth-cluster'
-  CONTAINER_NAME: 'auth-container'
-  RDS_INSTANCE: 'auth-db-${{ github.run_id }}'
-  ECS_SERVICE: 'auth-service-${{ github.run_id }}'
+  AWS_REGION: "us-east-1"
+  ECR_REPOSITORY: "auth-service"
+  ECS_CLUSTER: "auth-cluster"
+  CONTAINER_NAME: "auth-container"
+  RDS_INSTANCE: "auth-db-${{ github.run_id }}"
+  ECS_SERVICE: "auth-service-${{ github.run_id }}"
 
 jobs:
   # ============================================
@@ -38,7 +38,7 @@ jobs:
       should_deploy: ${{ steps.check.outputs.should_deploy }}
       pr_title: ${{ github.event.pull_request.title }}
       merged_by: ${{ github.event.pull_request.merged_by.login }}
-    
+
     steps:
       - name: 📋 Verify if PR was merged
         id: check
@@ -46,7 +46,7 @@ jobs:
           echo "PR Action: ${{ github.event.action }}"
           echo "PR Merged: ${{ github.event.pull_request.merged }}"
           echo "PR Title: ${{ github.event.pull_request.title }}"
-          
+
           if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
             echo "✅ PR WAS MERGED INTO MAIN - DEPLOYMENT WILL RUN"
             echo "Merged by: ${{ github.event.pull_request.merged_by.login }}"
@@ -69,12 +69,12 @@ jobs:
     outputs:
       image_tag: ${{ steps.build.outputs.image_tag }}
       ecr_registry: ${{ steps.build.outputs.ecr_registry }}
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
-          ref: main  
+          ref: main
 
       - name: 🎉 Deployment trigger info
         run: |
@@ -104,7 +104,7 @@ jobs:
       - name: 🏗️ Create ECR Repository if not exists
         run: |
           echo "🏗️ Checking if ECR repository exists..."
-          
+
           # Verificar se o repositório já existe
           if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > /dev/null 2>&1; then
             echo "✅ Repository already exists"
@@ -125,15 +125,15 @@ jobs:
         run: |
           echo "🔨 Building Docker image..."
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          
+
           echo "📤 Pushing to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          
+
           echo "✅ Image pushed successfully!"
           echo "Registry: $ECR_REGISTRY"
           echo "Repository: $ECR_REPOSITORY"
           echo "Tag: $IMAGE_TAG"
-          
+
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "ecr_registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
 
@@ -149,7 +149,7 @@ jobs:
     outputs:
       public_ip: ${{ steps.get-ip.outputs.PUBLIC_IP }}
       service_url: ${{ steps.get-url.outputs.SERVICE_URL }}
-    
+
     steps:
       - name: 📋 Starting AWS deployment
         run: |
@@ -171,11 +171,11 @@ jobs:
         id: create-db
         run: |
           echo "🗄️ Creating RDS PostgreSQL instance..."
-          
+
           # Gerar senha segura
           DB_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 16)
           echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
-          
+
           # Criar instância RDS (free tier: db.t3.micro)
           aws rds create-db-instance \
             --db-instance-identifier ${{ env.RDS_INSTANCE }} \
@@ -189,13 +189,13 @@ jobs:
             --no-multi-az \
             --no-auto-minor-version-upgrade \
             --tags Key=Project,Value=Academic Key=AutoDestroy,Value=true Key=RunId,Value=${{ github.run_id }}
-          
+
           echo "✅ RDS instance creation started: ${{ env.RDS_INSTANCE }}"
 
       - name: ⏳ Wait for database to be available
         run: |
           echo "⏳ Waiting for database to be ready (max 10 minutes)..."
-          
+
           for i in {1..30}; do
             STATUS=$(aws rds describe-db-instances \
               --db-instance-identifier ${{ env.RDS_INSTANCE }} \
@@ -223,28 +223,28 @@ jobs:
             --db-instance-identifier ${{ env.RDS_INSTANCE }} \
             --query 'DBInstances[0].Endpoint.Address' \
             --output text 2>/dev/null || echo "not-ready")
-          
+
           echo "RDS_ENDPOINT=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "📌 Database endpoint: $ENDPOINT"
 
       - name: 🐳 Create ECS Cluster
         run: |
           echo "🐳 Creating ECS cluster..."
-          
+
           aws ecs create-cluster \
             --cluster-name ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
             --tags key=Project,value=Academic key=AutoDestroy,value=true key=RunId,value=${{ github.run_id }}
-          
+
           echo "✅ ECS cluster created: ${{ env.ECS_CLUSTER }}-${{ github.run_id }}"
 
       - name: 🛠️ Create ECS Task Execution Role
         id: create-role
         run: |
           echo "🛠️ Creating/verifying ECS task execution role..."
-          
+
           # Verificar se a role já existe
           ROLE_NAME="ecsTaskExecutionRole-${{ github.run_id }}"
-          
+
           if aws iam get-role --role-name $ROLE_NAME 2>/dev/null; then
             echo "✅ Role already exists"
           else
@@ -280,7 +280,7 @@ jobs:
             
             echo "✅ Role created: $ROLE_NAME"
           fi
-          
+
           # Obter ARN da role
           ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text)
           echo "ROLE_ARN=$ROLE_ARN" >> $GITHUB_OUTPUT
@@ -296,7 +296,7 @@ jobs:
           ADMIN_SECRET_KEY: ${{ secrets.ADMIN_SECRET_KEY }}
         run: |
           echo "📄 Creating task definition..."
-          
+
           # Criar task definition JSON
           cat > task-definition.json << EOF
           {
@@ -361,17 +361,17 @@ jobs:
             ]
           }
           EOF
-          
+
           echo "Task definition content:"
           # Ocultar senha no log para segurança
           sed 's/postgres:[^@]*@/postgres:******@/g' task-definition.json
-          
+
           # Registrar task definition
           TASK_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://task-definition.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
-          
+
           echo "TASK_ARN=$TASK_ARN" >> $GITHUB_OUTPUT
           echo "✅ Task definition registered: $TASK_ARN"
 
@@ -379,15 +379,15 @@ jobs:
         id: create-sg
         run: |
           echo "🛡️ Creating security group..."
-          
+
           # Obter VPC padrão
           VPC_ID=$(aws ec2 describe-vpcs \
             --filters "Name=isDefault,Values=true" \
             --query 'Vpcs[0].VpcId' \
             --output text)
-          
+
           echo "Using VPC: $VPC_ID"
-          
+
           # Criar security group
           SG_ID=$(aws ec2 create-security-group \
             --group-name "auth-sg-${{ github.run_id }}" \
@@ -396,35 +396,34 @@ jobs:
             --tag-specifications 'ResourceType=security-group,Tags=[{Key=Project,Value=Academic},{Key=AutoDestroy,Value=true},{Key=RunId,Value=${{ github.run_id }}}]' \
             --query 'GroupId' \
             --output text)
-          
+
           echo "SG_ID=$SG_ID" >> $GITHUB_OUTPUT
-          
+
           # Permitir porta 1337 de qualquer lugar
           aws ec2 authorize-security-group-ingress \
             --group-id $SG_ID \
             --protocol tcp \
             --port 1337 \
             --cidr 0.0.0.0/0
-          
+
           echo "✅ Security group created: $SG_ID"
           echo "Port 1337 opened to public"
-
 
       - name: 🚀 Create ECS Service
         run: |
           echo "🚀 Creating ECS service..."
-          
+
           # Obter subnets do VPC padrão
           SUBNETS=$(aws ec2 describe-subnets \
             --filters "Name=vpc-id,Values=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query 'Vpcs[0].VpcId' --output text)" \
             --query 'Subnets[0:2].SubnetId' \
             --output text)
-          
+
           SUBNET_1=$(echo $SUBNETS | cut -d' ' -f1)
           SUBNET_2=$(echo $SUBNETS | cut -d' ' -f2)
-          
+
           echo "Using subnets: $SUBNET_1, $SUBNET_2"
-          
+
           # Criar serviço ECS
           aws ecs create-service \
             --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
@@ -435,13 +434,13 @@ jobs:
             --platform-version "LATEST" \
             --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],assignPublicIp=ENABLED,securityGroups=[${{ steps.create-sg.outputs.SG_ID }}]}" \
             --tags key=Project,value=Academic key=AutoDestroy,value=true key=RunId,value=${{ github.run_id }}
-          
+
           echo "✅ ECS service created: ${{ env.ECS_SERVICE }}"
 
       - name: ⏳ Wait for service to start
         run: |
           echo "⏳ Waiting for service to start (up to 3 minutes)..."
-          
+
           for i in {1..18}; do
             RUNNING=$(aws ecs describe-services \
               --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
@@ -467,7 +466,7 @@ jobs:
         id: get-ip
         run: |
           echo "🌐 Getting public IP address..."
-          
+
           # Tentar obter o IP algumas vezes
           for i in {1..10}; do
             echo "Attempt $i/10 to get public IP..."
@@ -525,7 +524,7 @@ jobs:
       - name: ⏰ Schedule Auto-Destruction
         run: |
           echo "⏰ Scheduling auto-destruction in 5 minutes..."
-          
+
           # Criar script de destruição
           cat > /tmp/destroy-resources.sh << 'EOF'
           #!/bin/bash
@@ -535,58 +534,58 @@ jobs:
           echo "Time: $(date)"
           echo "Run ID: $1"
           echo ""
-          
+
           # Configurar credenciais AWS (simplificado para demo)
           export AWS_ACCESS_KEY_ID="$2"
           export AWS_SECRET_ACCESS_KEY="$3"
           export AWS_REGION="$4"
-          
+
           # Esperar 5 minutos (300 segundos)
           echo "⏳ Waiting 5 minutes before cleanup..."
           sleep 300
-          
+
           echo "🔧 Starting resource cleanup..."
           echo ""
-          
+
           # 1. Parar serviço ECS
           echo "Step 1: Stopping ECS service..."
           aws ecs update-service \
             --cluster "$5" \
             --service "$6" \
             --desired-count 0 2>/dev/null || echo "Service already stopped or not found"
-          
+
           sleep 10
-          
+
           # 2. Deletar serviço ECS
           echo "Step 2: Deleting ECS service..."
           aws ecs delete-service \
             --cluster "$5" \
             --service "$6" \
             --force 2>/dev/null || echo "Service already deleted or not found"
-          
+
           # 3. Deletar cluster ECS
           echo "Step 3: Deleting ECS cluster..."
           aws ecs delete-cluster --cluster "$5" 2>/dev/null || echo "Cluster already deleted or not found"
-          
+
           # 4. Deletar instância RDS
           echo "Step 4: Deleting RDS instance..."
           aws rds delete-db-instance \
             --db-instance-identifier "$7" \
             --skip-final-snapshot \
             --delete-automated-backups 2>/dev/null || echo "RDS already deleted or not found"
-          
+
           # 5. Deletar security group
           echo "Step 5: Deleting security group..."
           aws ec2 delete-security-group --group-id "$8" 2>/dev/null || echo "Security group already deleted or not found"
-          
+
           echo ""
           echo "✅✅✅ CLEANUP COMPLETE ✅✅✅"
           echo "All resources destroyed at: $(date)"
           echo "========================================"
           EOF
-          
+
           chmod +x /tmp/destroy-resources.sh
-          
+
           # Executar em background
           nohup /tmp/destroy-resources.sh \
             "${{ github.run_id }}" \
@@ -598,7 +597,7 @@ jobs:
             "${{ env.RDS_INSTANCE }}" \
             "${{ steps.create-sg.outputs.SG_ID }}" \
             > /tmp/destroy-log-${{ github.run_id }}.txt 2>&1 &
-          
+
           echo "✅ Auto-destruction scheduled successfully"
           echo "🕒 Will execute at: $(date -d '+5 minutes' '+%H:%M:%S')"
           echo "📁 Log file: /tmp/destroy-log-${{ github.run_id }}.txt"
@@ -611,7 +610,7 @@ jobs:
           echo ""
           echo "✅ All AWS resources deployed"
           echo ""
-          
+
           if [ "${{ steps.get-ip.outputs.PUBLIC_IP }}" != "IP_NOT_AVAILABLE" ] && [ -n "${{ steps.get-ip.outputs.PUBLIC_IP }}" ]; then
             echo "🌐 SERVICE IS LIVE AT:"
             echo "   http://${{ steps.get-ip.outputs.PUBLIC_IP }}:1337"
@@ -627,7 +626,7 @@ jobs:
             echo "Service might still be starting..."
             echo "Check ECS console for status"
           fi
-          
+
           echo ""
           echo "🕒 AUTO-DESTRUCTION:"
           echo "   Scheduled in 5 minutes"
@@ -657,7 +656,7 @@ jobs:
     needs: [check-merge, build-docker, deploy-aws]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: 📋 Generate final report
         run: |
@@ -665,7 +664,7 @@ jobs:
           echo "✅✅✅ CI/CD PIPELINE - ALL CHECKS ✅✅✅"
           echo "========================================"
           echo ""
-          
+
           # Informações do trigger
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "📌 TRIGGER: Automated after PR merge"
@@ -675,14 +674,14 @@ jobs:
             echo "📌 TRIGGER: Manual deployment"
             echo "   Executed by: ${{ github.actor }}"
           fi
-          
+
           echo ""
           echo "🔍 JOB STATUS (ALL SHOULD BE GREEN):"
           echo "   1. 🔍 Check Merge Status: ${{ needs.check-merge.result }}"
           echo "   2. 🐳 Build Docker Image: ${{ needs.build-docker.result || 'skipped' }}"
           echo "   3. 🚀 Deploy to AWS: ${{ needs.deploy-aws.result || 'skipped' }}"
           echo ""
-          
+
           # Verificar se todos os jobs necessários foram bem-sucedidos
           if [[ "${{ needs.check-merge.result }}" == "success" ]] && \
              [[ "${{ needs.build-docker.result }}" == "success" ]] && \
@@ -717,7 +716,7 @@ jobs:
             echo "⚠️  Some checks did not pass"
             echo "Review the failed jobs above"
           fi
-          
+
           echo ""
           echo "========================================"
           echo "🎥 RECORD THIS SCREEN FOR YOUR DEMO!"
