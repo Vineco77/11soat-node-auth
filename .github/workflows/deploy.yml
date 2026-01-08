@@ -2,7 +2,6 @@ name: Deploy to AWS ECS with Auto-Destroy
 
 on:
   pull_request:
-    types: [closed]
     branches: [main]
 
   workflow_dispatch:
