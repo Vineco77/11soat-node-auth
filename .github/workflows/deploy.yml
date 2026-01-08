@@ -292,6 +292,8 @@ jobs:
           ECR_REGISTRY: ${{ needs.build-docker.outputs.ecr_registry }}
           IMAGE_TAG: ${{ needs.build-docker.outputs.image_tag }}
           RDS_ENDPOINT: ${{ steps.db-endpoint.outputs.RDS_ENDPOINT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_SECRET_KEY: ${{ secrets.ADMIN_SECRET_KEY }}
         run: |
           echo "📄 Creating task definition..."
           
@@ -316,7 +318,7 @@ jobs:
                 "environment": [
                   {
                     "name": "DATABASE_URL",
-                    "value": "postgresql://postgres:${{ env.DB_PASSWORD }}@$RDS_ENDPOINT:5432/postgres?schema=public"
+                    "value": "postgresql://postgres:${DB_PASSWORD}@$RDS_ENDPOINT:5432/postgres?schema=public"
                   },
                   {
                     "name": "PORT",
@@ -332,11 +334,11 @@ jobs:
                   },
                   {
                     "name": "JWT_SECRET",
-                    "value": "${{ secrets.JWT_SECRET || 'academic-jwt-secret-key-123456' }}"
+                    "value": "$JWT_SECRET"
                   },
                   {
                     "name": "ADMIN_SECRET_KEY",
-                    "value": "${{ secrets.ADMIN_SECRET_KEY || 'academic-admin-secret-key-123456' }}"
+                    "value": "$ADMIN_SECRET_KEY"
                   }
                 ],
                 "logConfiguration": {
@@ -370,7 +372,7 @@ jobs:
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           
-          echo "TASK_ARN=$TASK_ARN" >> $GITHUB_OUTPUT  # ⬅️ CORREÇÃO AQUI!
+          echo "TASK_ARN=$TASK_ARN" >> $GITHUB_OUTPUT
           echo "✅ Task definition registered: $TASK_ARN"
 
       - name: 🛡️ Create Security Group
