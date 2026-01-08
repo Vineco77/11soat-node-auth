@@ -242,7 +242,6 @@ jobs:
         run: |
           echo "🛠️ Creating/verifying ECS task execution role..."
 
-          # Verificar se a role já existe
           ROLE_NAME="ecsTaskExecutionRole-${{ github.run_id }}"
 
           if aws iam get-role --role-name $ROLE_NAME 2>/dev/null; then
@@ -251,20 +250,20 @@ jobs:
             echo "📝 Creating new role..."
             
             # Criar trust policy para ECS
-            cat > trust-policy.json << TRUSTEOF
-            {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Principal": {
-                    "Service": "ecs-tasks.amazonaws.com"
-                  },
-                  "Action": "sts:AssumeRole"
-                }
-              ]
-            }
-            TRUSTEOF
+            cat > trust-policy.json << 'TRUSTEOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+TRUSTEOF
             
             # Criar a role
             aws iam create-role \
