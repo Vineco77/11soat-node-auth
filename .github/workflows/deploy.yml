@@ -2,15 +2,17 @@ name: Deploy to AWS ECS with Auto-Destroy
 
 on:
   pull_request:
+    types: [closed]
     branches: [main]
-
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch to deploy"
+        description: "Branch to deploy (só main é válido)"
         required: true
         default: "main"
-        type: string
+        type: choice
+        options:
+          - main
       confirm:
         description: 'Type "yes" to confirm deployment'
         required: true
