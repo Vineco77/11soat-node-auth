@@ -105,7 +105,6 @@ jobs:
         run: |
           echo "🏗️ Checking if ECR repository exists..."
 
-          # Verificar se o repositório já existe
           if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > /dev/null 2>&1; then
             echo "✅ Repository already exists"
           else
@@ -172,11 +171,9 @@ jobs:
         run: |
           echo "🗄️ Creating RDS PostgreSQL instance..."
 
-          # Gerar senha segura
           DB_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 16)
           echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
 
-          # Criar instância RDS (free tier: db.t3.micro)
           aws rds create-db-instance \
             --db-instance-identifier ${{ env.RDS_INSTANCE }} \
             --db-instance-class db.t3.micro \
@@ -249,9 +246,8 @@ jobs:
           else
             echo "📝 Creating new role..."
             
-            # Criar trust policy para ECS
-            cat > trust-policy.json << 'TRUSTEOF'
-{
+            # Usar echo para evitar problemas com here-doc
+            echo '{
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -262,17 +258,14 @@ jobs:
       "Action": "sts:AssumeRole"
     }
   ]
-}
-TRUSTEOF
+}' > trust-policy.json
             
-            # Criar a role
             aws iam create-role \
               --role-name $ROLE_NAME \
               --assume-role-policy-document file://trust-policy.json \
               --description "ECS Task Execution Role for Auto-Destroy demo" \
               --tags Key=Project,Value=Academic Key=AutoDestroy,Value=true Key=RunId,Value=${{ github.run_id }}
             
-            # Anexar a política padrão do ECS
             aws iam attach-role-policy \
               --role-name $ROLE_NAME \
               --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
@@ -280,7 +273,6 @@ TRUSTEOF
             echo "✅ Role created: $ROLE_NAME"
           fi
 
-          # Obter ARN da role
           ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text)
           echo "ROLE_ARN=$ROLE_ARN" >> $GITHUB_OUTPUT
           echo "Role ARN: $ROLE_ARN"
@@ -291,81 +283,76 @@ TRUSTEOF
           ECR_REGISTRY: ${{ needs.build-docker.outputs.ecr_registry }}
           IMAGE_TAG: ${{ needs.build-docker.outputs.image_tag }}
           RDS_ENDPOINT: ${{ steps.db-endpoint.outputs.RDS_ENDPOINT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ADMIN_SECRET_KEY: ${{ secrets.ADMIN_SECRET_KEY }}
         run: |
           echo "📄 Creating task definition..."
 
-          # Criar task definition JSON
-          cat > task-definition.json << EOF
-          {
-            "family": "auth-task-${{ github.run_id }}",
-            "networkMode": "awsvpc",
-            "executionRoleArn": "${{ steps.create-role.outputs.ROLE_ARN }}",
-            "containerDefinitions": [
-              {
-                "name": "${{ env.CONTAINER_NAME }}",
-                "image": "$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG",
-                "portMappings": [
-                  {
-                    "containerPort": 1337,
-                    "hostPort": 1337,
-                    "protocol": "tcp"
-                  }
-                ],
-                "essential": true,
-                "environment": [
-                  {
-                    "name": "DATABASE_URL",
-                    "value": "postgresql://postgres:${DB_PASSWORD}@$RDS_ENDPOINT:5432/postgres?schema=public"
-                  },
-                  {
-                    "name": "PORT",
-                    "value": "1337"
-                  },
-                  {
-                    "name": "HOST",
-                    "value": "0.0.0.0"
-                  },
-                  {
-                    "name": "NODE_ENV",
-                    "value": "production"
-                  },
-                  {
-                    "name": "JWT_SECRET",
-                    "value": "$JWT_SECRET"
-                  },
-                  {
-                    "name": "ADMIN_SECRET_KEY",
-                    "value": "$ADMIN_SECRET_KEY"
-                  }
-                ],
-                "logConfiguration": {
-                  "logDriver": "awslogs",
-                  "options": {
-                    "awslogs-group": "/ecs/auth-service",
-                    "awslogs-region": "${{ env.AWS_REGION }}",
-                    "awslogs-stream-prefix": "ecs"
-                  }
-                }
-              }
-            ],
-            "requiresCompatibilities": ["FARGATE"],
-            "cpu": "256",
-            "memory": "512",
-            "tags": [
-              {"key": "Project", "value": "Academic"},
-              {"key": "AutoDestroy", "value": "true"},
-              {"key": "RunId", "value": "${{ github.run_id }}"}
-            ]
-          }
-          EOF
+          cat > task-definition.json << 'TASKDEFEOF'
+{
+  "family": "auth-task-${{ github.run_id }}",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "${{ steps.create-role.outputs.ROLE_ARN }}",
+  "containerDefinitions": [
+    {
+      "name": "${{ env.CONTAINER_NAME }}",
+      "image": "$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG",
+      "portMappings": [
+        {
+          "containerPort": 1337,
+          "hostPort": 1337,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "DATABASE_URL",
+          "value": "postgresql://postgres:${{ env.DB_PASSWORD }}@$RDS_ENDPOINT:5432/postgres?schema=public"
+        },
+        {
+          "name": "PORT",
+          "value": "1337"
+        },
+        {
+          "name": "HOST",
+          "value": "0.0.0.0"
+        },
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "JWT_SECRET",
+          "value": "${{ secrets.JWT_SECRET || 'academic-jwt-secret-key-123456' }}"
+        },
+        {
+          "name": "ADMIN_SECRET_KEY",
+          "value": "${{ secrets.ADMIN_SECRET_KEY || 'academic-admin-secret-key-123456' }}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/auth-service",
+          "awslogs-region": "${{ env.AWS_REGION }}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "tags": [
+    {"key": "Project", "value": "Academic"},
+    {"key": "AutoDestroy", "value": "true"},
+    {"key": "RunId", "value": "${{ github.run_id }}"}
+  ]
+}
+TASKDEFEOF
 
-          echo "Task definition content:"
-          # Ocultar senha no log para segurança
+          echo "Task definition content (password hidden):"
           sed 's/postgres:[^@]*@/postgres:******@/g' task-definition.json
 
-          # Registrar task definition
           TASK_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://task-definition.json \
             --query 'taskDefinition.taskDefinitionArn' \
@@ -379,7 +366,6 @@ TRUSTEOF
         run: |
           echo "🛡️ Creating security group..."
 
-          # Obter VPC padrão
           VPC_ID=$(aws ec2 describe-vpcs \
             --filters "Name=isDefault,Values=true" \
             --query 'Vpcs[0].VpcId' \
@@ -387,7 +373,6 @@ TRUSTEOF
 
           echo "Using VPC: $VPC_ID"
 
-          # Criar security group
           SG_ID=$(aws ec2 create-security-group \
             --group-name "auth-sg-${{ github.run_id }}" \
             --description "Auth Service Security Group - Auto Destroy" \
@@ -398,7 +383,6 @@ TRUSTEOF
 
           echo "SG_ID=$SG_ID" >> $GITHUB_OUTPUT
 
-          # Permitir porta 1337 de qualquer lugar
           aws ec2 authorize-security-group-ingress \
             --group-id $SG_ID \
             --protocol tcp \
@@ -412,7 +396,6 @@ TRUSTEOF
         run: |
           echo "🚀 Creating ECS service..."
 
-          # Obter subnets do VPC padrão
           SUBNETS=$(aws ec2 describe-subnets \
             --filters "Name=vpc-id,Values=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query 'Vpcs[0].VpcId' --output text)" \
             --query 'Subnets[0:2].SubnetId' \
@@ -423,7 +406,6 @@ TRUSTEOF
 
           echo "Using subnets: $SUBNET_1, $SUBNET_2"
 
-          # Criar serviço ECS
           aws ecs create-service \
             --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
             --service-name ${{ env.ECS_SERVICE }} \
@@ -466,11 +448,9 @@ TRUSTEOF
         run: |
           echo "🌐 Getting public IP address..."
 
-          # Tentar obter o IP algumas vezes
           for i in {1..10}; do
             echo "Attempt $i/10 to get public IP..."
             
-            # Obter task ARN
             TASK_ARN=$(aws ecs list-tasks \
               --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
               --service-name ${{ env.ECS_SERVICE }} \
@@ -478,7 +458,6 @@ TRUSTEOF
               --output text 2>/dev/null || echo "")
             
             if [ -n "$TASK_ARN" ]; then
-              # Obter ENI ID
               ENI_ID=$(aws ecs describe-tasks \
                 --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
                 --tasks $TASK_ARN \
@@ -486,7 +465,6 @@ TRUSTEOF
                 --output text 2>/dev/null || echo "")
               
               if [ -n "$ENI_ID" ]; then
-                # Obter IP público
                 PUBLIC_IP=$(aws ec2 describe-network-interfaces \
                   --network-interface-ids $ENI_ID \
                   --query 'NetworkInterfaces[0].Association.PublicIp' \
@@ -524,68 +502,59 @@ TRUSTEOF
         run: |
           echo "⏰ Scheduling auto-destruction in 5 minutes..."
 
-          # Criar script de destruição
-          cat > /tmp/destroy-resources.sh << 'EOF'
-          #!/bin/bash
-          echo "========================================"
-          echo "🧹 AUTO-DESTRUCTION INITIATED"
-          echo "========================================"
-          echo "Time: $(date)"
-          echo "Run ID: $1"
-          echo ""
+          # Criar script de destruição com echo para evitar here-doc
+          DESTROY_SCRIPT='#!/bin/bash
+echo "========================================"
+echo "🧹 AUTO-DESTRUCTION INITIATED"
+echo "========================================"
+echo "Time: $(date)"
+echo "Run ID: $1"
+echo ""
 
-          # Configurar credenciais AWS (simplificado para demo)
-          export AWS_ACCESS_KEY_ID="$2"
-          export AWS_SECRET_ACCESS_KEY="$3"
-          export AWS_REGION="$4"
+export AWS_ACCESS_KEY_ID="$2"
+export AWS_SECRET_ACCESS_KEY="$3"
+export AWS_REGION="$4"
 
-          # Esperar 5 minutos (300 segundos)
-          echo "⏳ Waiting 5 minutes before cleanup..."
-          sleep 300
+echo "⏳ Waiting 5 minutes before cleanup..."
+sleep 300
 
-          echo "🔧 Starting resource cleanup..."
-          echo ""
+echo "🔧 Starting resource cleanup..."
+echo ""
 
-          # 1. Parar serviço ECS
-          echo "Step 1: Stopping ECS service..."
-          aws ecs update-service \
-            --cluster "$5" \
-            --service "$6" \
-            --desired-count 0 2>/dev/null || echo "Service already stopped or not found"
+echo "Step 1: Stopping ECS service..."
+aws ecs update-service \
+  --cluster "$5" \
+  --service "$6" \
+  --desired-count 0 2>/dev/null || echo "Service already stopped or not found"
 
-          sleep 10
+sleep 10
 
-          # 2. Deletar serviço ECS
-          echo "Step 2: Deleting ECS service..."
-          aws ecs delete-service \
-            --cluster "$5" \
-            --service "$6" \
-            --force 2>/dev/null || echo "Service already deleted or not found"
+echo "Step 2: Deleting ECS service..."
+aws ecs delete-service \
+  --cluster "$5" \
+  --service "$6" \
+  --force 2>/dev/null || echo "Service already deleted or not found"
 
-          # 3. Deletar cluster ECS
-          echo "Step 3: Deleting ECS cluster..."
-          aws ecs delete-cluster --cluster "$5" 2>/dev/null || echo "Cluster already deleted or not found"
+echo "Step 3: Deleting ECS cluster..."
+aws ecs delete-cluster --cluster "$5" 2>/dev/null || echo "Cluster already deleted or not found"
 
-          # 4. Deletar instância RDS
-          echo "Step 4: Deleting RDS instance..."
-          aws rds delete-db-instance \
-            --db-instance-identifier "$7" \
-            --skip-final-snapshot \
-            --delete-automated-backups 2>/dev/null || echo "RDS already deleted or not found"
+echo "Step 4: Deleting RDS instance..."
+aws rds delete-db-instance \
+  --db-instance-identifier "$7" \
+  --skip-final-snapshot \
+  --delete-automated-backups 2>/dev/null || echo "RDS already deleted or not found"
 
-          # 5. Deletar security group
-          echo "Step 5: Deleting security group..."
-          aws ec2 delete-security-group --group-id "$8" 2>/dev/null || echo "Security group already deleted or not found"
+echo "Step 5: Deleting security group..."
+aws ec2 delete-security-group --group-id "$8" 2>/dev/null || echo "Security group already deleted or not found"
 
-          echo ""
-          echo "✅✅✅ CLEANUP COMPLETE ✅✅✅"
-          echo "All resources destroyed at: $(date)"
-          echo "========================================"
-          EOF
+echo ""
+echo "✅✅✅ CLEANUP COMPLETE ✅✅✅"
+echo "All resources destroyed at: $(date)"
+echo "========================================"'
 
+          echo "$DESTROY_SCRIPT" > /tmp/destroy-resources.sh
           chmod +x /tmp/destroy-resources.sh
 
-          # Executar em background
           nohup /tmp/destroy-resources.sh \
             "${{ github.run_id }}" \
             "${{ secrets.AWS_ACCESS_KEY_ID }}" \
@@ -643,7 +612,6 @@ TRUSTEOF
         if: failure()
         run: |
           echo "🧹 Cleaning up due to failure..."
-          # Tenta limpar o que foi criado
           aws ecs delete-service --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} --service ${{ env.ECS_SERVICE }} --force 2>/dev/null || true
           aws rds delete-db-instance --db-instance-identifier ${{ env.RDS_INSTANCE }} --skip-final-snapshot 2>/dev/null || true
 
@@ -664,7 +632,6 @@ TRUSTEOF
           echo "========================================"
           echo ""
 
-          # Informações do trigger
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "📌 TRIGGER: Automated after PR merge"
             echo "   PR: ${{ needs.check-merge.outputs.pr_title || 'N/A' }}"
@@ -681,7 +648,6 @@ TRUSTEOF
           echo "   3. 🚀 Deploy to AWS: ${{ needs.deploy-aws.result || 'skipped' }}"
           echo ""
 
-          # Verificar se todos os jobs necessários foram bem-sucedidos
           if [[ "${{ needs.check-merge.result }}" == "success" ]] && \
              [[ "${{ needs.build-docker.result }}" == "success" ]] && \
              [[ "${{ needs.deploy-aws.result }}" == "success" ]]; then
