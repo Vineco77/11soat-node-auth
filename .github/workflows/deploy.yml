@@ -357,7 +357,7 @@ jobs:
           fi
 
       # ========== TASK DEFINITION ==========
-      - name: 📄 Create Task Definition (CORRIGIDO)
+      - name: 📄 Create Task Definition
         id: create-task
         env:
           ECR_REGISTRY: ${{ needs.build-docker.outputs.ecr_registry }}
@@ -459,7 +459,7 @@ jobs:
           echo "✅ Task definition registered: $TASK_ARN"
 
       # ========== ECS SERVICE ==========
-      - name: 🚀 Create ECS Service (CORRIGIDO)
+      - name: 🚀 Create ECS Service
         run: |
           echo "🚀 Creating ECS service..."
 
@@ -497,13 +497,14 @@ jobs:
             --launch-type FARGATE \
             --platform-version "LATEST" \
             --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],assignPublicIp=ENABLED,securityGroups=[${{ steps.create-ecs-sg.outputs.ECS_SG_ID }}]}" \
+            --enable-execute-command \
             --health-check-grace-period-seconds 120 \
             --tags key=Project,value=Academic key=AutoDestroy,value=true key=RunId,value=${{ github.run_id }}
 
           echo "✅ ECS service created: ${{ env.ECS_SERVICE }}"
 
       # ========== WAIT FOR SERVICE ==========
-      - name: ⏳ Wait for service to start (MELHORADO)
+      - name: ⏳ Wait for service to start
         id: wait-service
         run: |
           echo "⏳ Waiting for service to start (up to 5 minutes)..."
@@ -641,11 +642,102 @@ jobs:
 
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
+      - name: 📊 Check ECS Task Status & Logs
+        id: check-task-logs
+        run: |
+          echo "📊 Checking ECS task status and logs..."
+
+          # Obter task ARN
+          TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+            --service-name ${{ env.ECS_SERVICE }} \
+            --query 'taskArns[0]' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "$TASK_ARN" ]; then
+            echo "❌ No tasks found for service"
+            exit 0
+          fi
+
+          echo "Task ARN: $TASK_ARN"
+
+          # Obter status da task
+          TASK_STATUS=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].lastStatus' \
+            --output text 2>/dev/null || echo "UNKNOWN")
+
+          echo "Task Status: $TASK_STATUS"
+
+          # Se a task está rodando, obter mais detalhes
+          if [ "$TASK_STATUS" = "RUNNING" ]; then
+            echo "✅ Task is running"
+            
+            # Obter health status
+            HEALTH_STATUS=$(aws ecs describe-tasks \
+              --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+              --tasks $TASK_ARN \
+              --query 'tasks[0].healthStatus' \
+              --output text 2>/dev/null || echo "UNKNOWN")
+            
+            echo "Health Status: $HEALTH_STATUS"
+            
+            # Obter motivo se a task não estiver saudável
+            if [ "$HEALTH_STATUS" != "HEALTHY" ]; then
+              echo "⚠️ Task is not healthy, checking containers..."
+              
+              CONTAINERS=$(aws ecs describe-tasks \
+                --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+                --tasks $TASK_ARN \
+                --query 'tasks[0].containers[]' \
+                --output json 2>/dev/null || echo "[]")
+              
+              echo "Containers status:"
+              echo $CONTAINERS | jq -r '.[] | "  - \(.name): \(.lastStatus) (Exit: \(.exitCode), Reason: \(.reason))"'
+            fi
+          elif [ "$TASK_STATUS" = "STOPPED" ]; then
+            echo "❌ Task is stopped, checking reason..."
+            
+            STOP_REASON=$(aws ecs describe-tasks \
+              --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+              --tasks $TASK_ARN \
+              --query 'tasks[0].containers[0].reason' \
+              --output text 2>/dev/null || echo "Unknown")
+            
+            EXIT_CODE=$(aws ecs describe-tasks \
+              --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+              --tasks $TASK_ARN \
+              --query 'tasks[0].containers[0].exitCode' \
+              --output text 2>/dev/null || echo "Unknown")
+            
+            echo "Stop Reason: $STOP_REASON"
+            echo "Exit Code: $EXIT_CODE"
+            
+            # Tentar executar comando na task para diagnóstico
+            echo "🔄 Attempting to execute diagnostic command..."
+            aws ecs execute-command \
+              --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+              --task $TASK_ARN \
+              --command "ps aux" \
+              --interactive 2>/dev/null || echo "Execute command not available"
+          else
+            echo "ℹ️ Task status: $TASK_STATUS"
+          fi
+
+          # Verificar eventos do serviço
+          echo "📋 Service events (last 5):"
+          aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].events[0:5]' \
+            --output json | jq -r '.[] | "  [\(.createdAt)] \(.message)"' 2>/dev/null || echo "  No events found"
+
       # ========== TEST APPLICATION ==========
       - name: 🧪 Test application endpoint
         id: test-app
         run: |
-          echo "🧪 Testing application endpoint..."
+          echo "🧪 Testing application endpoint with intelligent checks..."
 
           PUBLIC_IP="${{ steps.get-ip.outputs.PUBLIC_IP }}"
 
@@ -655,56 +747,147 @@ jobs:
             exit 0
           fi
 
-          echo "Testing http://$PUBLIC_IP:1337"
+          echo "Testing application at: http://$PUBLIC_IP:1337"
 
-          MAX_RETRIES=15
+          # Lista de endpoints possíveis para testar (em ordem de prioridade)
+          ENDPOINTS=(
+            "/"                    # Página raiz
+            "/health"              # Endpoint de health padrão
+            "/api"                 # API documentation
+            "/api/health"          # Health da API
+            "/auth/health"         # Health do auth
+            "/docs"                # Documentação
+            "/swagger"             # Swagger
+            "/status"              # Status
+            "/ping"                # Ping simples
+            "/v1/health"           # Health v1
+          )
+
+          # Testar também portas alternativas
+          PORTS=("1337" "3000" "8080" "80" "443")
+
+          MAX_RETRIES=10
           RETRY=0
           HEALTH_CHECK="failed"
+          ACTUAL_ENDPOINT=""
+          ACTUAL_PORT="1337"
 
-          while [ $RETRY -lt $MAX_RETRIES ]; do
+          echo "🔍 Starting intelligent health check..."
+
+          # Primeiro, verificar se a porta 1337 está aberta
+          echo "Checking if port 1337 is open..."
+          if nc -z -w 5 "$PUBLIC_IP" 1337 2>/dev/null; then
+            echo "✅ Port 1337 is open and accepting connections"
+            ACTUAL_PORT="1337"
+          else
+            echo "⚠️ Port 1337 is not responding, trying alternative ports..."
+            
+            for PORT in "${PORTS[@]}"; do
+              if [ "$PORT" != "1337" ]; then
+                echo "  Trying port $PORT..."
+                if timeout 2 nc -z "$PUBLIC_IP" "$PORT" 2>/dev/null; then
+                  echo "✅ Port $PORT is open!"
+                  ACTUAL_PORT="$PORT"
+                  break
+                fi
+              fi
+            done
+          fi
+
+          # Se encontramos uma porta aberta, testar endpoints
+          if [ "$ACTUAL_PORT" != "1337" ]; then
+            echo "ℹ️ Application might be running on port: $ACTUAL_PORT"
+          fi
+
+          # Testar endpoints com retry inteligente
+          while [ $RETRY -lt $MAX_RETRIES ] && [ "$HEALTH_CHECK" != "passed" ]; do
             RETRY=$((RETRY + 1))
             
+            echo ""
             echo "Health check attempt $RETRY/$MAX_RETRIES..."
             
-            # Tentar várias endpoints possíveis
-            for ENDPOINT in "/" "/health" "/api" "/auth/health"; do
-              echo "  Trying $ENDPOINT..."
+            # Para cada endpoint
+            for ENDPOINT in "${ENDPOINTS[@]}"; do
+              echo "  Testing: http://$PUBLIC_IP:$ACTUAL_PORT$ENDPOINT"
               
-              RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-                --max-time 10 \
-                "http://$PUBLIC_IP:1337$ENDPOINT" 2>/dev/null || echo "000")
+              # Tentar com timeout e várias opções de curl
+              RESPONSE=$(timeout 5 curl -s -o /dev/null -w "%{http_code} %{content_type}" \
+                "http://$PUBLIC_IP:$ACTUAL_PORT$ENDPOINT" 2>/dev/null || echo "000")
               
-              if [ "$RESPONSE_CODE" = "200" ] || [ "$RESPONSE_CODE" = "404" ] || [ "$RESPONSE_CODE" = "401" ]; then
-                echo "  ✅ Got response code: $RESPONSE_CODE"
+              RESPONSE_CODE=$(echo $RESPONSE | cut -d' ' -f1)
+              CONTENT_TYPE=$(echo $RESPONSE | cut -d' ' -f2)
+              
+              if [ "$RESPONSE_CODE" = "200" ] || [ "$RESPONSE_CODE" = "201" ] || [ "$RESPONSE_CODE" = "204" ]; then
+                echo "    ✅ Success! Response code: $RESPONSE_CODE"
                 HEALTH_CHECK="passed"
+                ACTUAL_ENDPOINT="$ENDPOINT"
                 break 2
+              elif [ "$RESPONSE_CODE" = "404" ] || [ "$RESPONSE_CODE" = "401" ] || [ "$RESPONSE_CODE" = "403" ]; then
+                echo "    ℹ️ Endpoint exists but returned: $RESPONSE_CODE"
+                HEALTH_CHECK="partial"
+                ACTUAL_ENDPOINT="$ENDPOINT"
+              elif [ "$RESPONSE_CODE" != "000" ] && [ "$RESPONSE_CODE" != "" ]; then
+                echo "    ⚠️ Got response: $RESPONSE_CODE"
+                HEALTH_CHECK="responding"
+                ACTUAL_ENDPOINT="$ENDPOINT"
               fi
             done
             
-            if [ "$HEALTH_CHECK" = "passed" ]; then
-              break
-            fi
-            
-            if [ $RETRY -eq $MAX_RETRIES ]; then
-              echo "⚠️ Application not responding after $MAX_RETRIES attempts"
+            # Se ainda não encontrou, esperar um pouco mais entre tentativas
+            if [ "$HEALTH_CHECK" != "passed" ]; then
+              WAIT_TIME=$((RETRY * 2))  # Backoff exponencial
+              echo "  Waiting $WAIT_TIME seconds before next attempt..."
+              sleep $WAIT_TIME
               
-              # Tentar obter logs da tarefa para diagnóstico
-              echo "📋 Attempting to get task logs for diagnosis..."
-              TASK_ARN=$(aws ecs list-tasks \
-                --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
-                --service-name ${{ env.ECS_SERVICE }} \
-                --query 'taskArns[0]' \
-                --output text 2>/dev/null || echo "")
-              
-              if [ -n "$TASK_ARN" ]; then
-                echo "Task logs not available without CloudWatch setup. Check AWS Console for task: $TASK_ARN"
+              # Na última tentativa, fazer diagnóstico mais detalhado
+              if [ $RETRY -eq $MAX_RETRIES ]; then
+                echo ""
+                echo "📋 Diagnostic information:"
+                echo "  Public IP: $PUBLIC_IP"
+                echo "  Port tested: $ACTUAL_PORT"
+                echo "  Endpoints tested: ${ENDPOINTS[*]}"
+                
+                # Testar conectividade básica
+                echo ""
+                echo "🔍 Basic connectivity tests:"
+                echo "  - Ping test:"
+                ping -c 2 -W 2 "$PUBLIC_IP" 2>/dev/null && echo "    ✅ Host is reachable" || echo "    ❌ Host unreachable"
+                
+                echo "  - Port scan (common ports):"
+                for PORT in 1337 80 443 3000 8080; do
+                  timeout 1 bash -c "echo >/dev/tcp/$PUBLIC_IP/$PORT" 2>/dev/null && \
+                    echo "    ✅ Port $PORT is open" || \
+                    echo "    ❌ Port $PORT is closed"
+                done
+                
+                # Verificar se há serviço rodando com netstat remoto (usando nmap se disponível)
+                echo "  - Service detection:"
+                if command -v nmap &> /dev/null; then
+                  echo "    Scanning for services on $PUBLIC_IP..."
+                  nmap -p 1337,80,443,3000,8080 "$PUBLIC_IP" 2>/dev/null | grep -E "(PORT|open|closed|filtered)" || true
+                fi
               fi
             fi
-            
-            sleep 10
           done
 
+          # Resultado final
+          echo ""
+          if [ "$HEALTH_CHECK" = "passed" ]; then
+            echo "🎉 HEALTH CHECK PASSED!"
+            echo "✅ Application is responding at: http://$PUBLIC_IP:$ACTUAL_PORT$ACTUAL_ENDPOINT"
+          elif [ "$HEALTH_CHECK" = "partial" ] || [ "$HEALTH_CHECK" = "responding" ]; then
+            echo "⚠️ APPLICATION IS RUNNING BUT WITH ISSUES"
+            echo "ℹ️ Got response at: http://$PUBLIC_IP:$ACTUAL_PORT$ACTUAL_ENDPOINT"
+            HEALTH_CHECK="partial"
+          else
+            echo "❌ HEALTH CHECK FAILED"
+            echo "Application is not responding to any endpoint"
+            HEALTH_CHECK="failed"
+          fi
+
           echo "HEALTH_CHECK=$HEALTH_CHECK" >> $GITHUB_OUTPUT
+          echo "ACTUAL_PORT=$ACTUAL_PORT" >> $GITHUB_OUTPUT
+          echo "ACTUAL_ENDPOINT=$ACTUAL_ENDPOINT" >> $GITHUB_OUTPUT
 
       # ========== CREATE SERVICE URL ==========
       - name: 🔗 Create service URL
