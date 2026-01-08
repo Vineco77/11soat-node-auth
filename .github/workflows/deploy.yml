@@ -4,21 +4,6 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to deploy (só main é válido)"
-        required: true
-        default: "main"
-        type: choice
-        options:
-          - main
-      confirm:
-        description: 'Type "yes" to confirm deployment'
-        required: true
-        type: string
-        default: "yes"
-
 env:
   AWS_REGION: "us-east-1"
   ECR_REPOSITORY: "auth-service"
@@ -29,11 +14,13 @@ env:
 
 jobs:
   # ============================================
-  # JOB 1: Verificar se foi MERGE (não apenas closed)
+  # JOB 1: Verificar se foi MERGE
   # ============================================
   check-merge:
     name: 🔍 Check Merge Status
-    if: github.event_name == 'pull_request'
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     outputs:
       should_deploy: ${{ steps.check.outputs.should_deploy }}
@@ -48,12 +35,13 @@ jobs:
           echo "PR Merged: ${{ github.event.pull_request.merged }}"
           echo "PR Title: ${{ github.event.pull_request.title }}"
 
-          if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            echo "✅ PR WAS MERGED INTO MAIN - DEPLOYMENT WILL RUN"
+          if [[ "${{ github.event.pull_request.merged }}" == "true" && 
+                "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+            echo "✅✅✅ PR WAS MERGED INTO MAIN - DEPLOYMENT WILL RUN"
             echo "Merged by: ${{ github.event.pull_request.merged_by.login }}"
             echo "should_deploy=true" >> $GITHUB_OUTPUT
           else
-            echo "❌ PR was CLOSED without merge - SKIPPING DEPLOY"
+            echo "❌❌❌ SKIPPING DEPLOY - Not a merge into main"
             echo "should_deploy=false" >> $GITHUB_OUTPUT
           fi
 
@@ -63,9 +51,7 @@ jobs:
   build-docker:
     name: 🐳 Build & Push Docker Image
     needs: check-merge
-    if: |
-      (github.event_name == 'pull_request' && needs.check-merge.outputs.should_deploy == 'true') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'yes')
+    if: needs.check-merge.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.build.outputs.image_tag }}
