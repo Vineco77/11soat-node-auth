@@ -1,12 +1,10 @@
 name: Deploy to AWS ECS with Auto-Destroy
 
 on:
-  # Executa quando PR é FECHADA (após merge ou close)
   pull_request:
     types: [closed]
     branches: [main]
   
-  # Backup: botão manual
   workflow_dispatch:
     inputs:
       branch:
@@ -20,13 +18,11 @@ on:
         type: string
         default: 'yes'
 
-# Variáveis globais
 env:
   AWS_REGION: 'us-east-1'
   ECR_REPOSITORY: 'auth-service'
   ECS_CLUSTER: 'auth-cluster'
   CONTAINER_NAME: 'auth-container'
-  # Usa run_id para nomes únicos
   RDS_INSTANCE: 'auth-db-${{ github.run_id }}'
   ECS_SERVICE: 'auth-service-${{ github.run_id }}'
 
@@ -66,7 +62,6 @@ jobs:
   build-docker:
     name: 🐳 Build & Push Docker Image
     needs: check-merge
-    # Executa se: foi MERGE OU se é workflow_dispatch com confirmação
     if: |
       (github.event_name == 'pull_request' && needs.check-merge.outputs.should_deploy == 'true') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'yes')
@@ -79,7 +74,7 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
-          ref: main  # Sempre deploy da main
+          ref: main  
 
       - name: 🎉 Deployment trigger info
         run: |
@@ -172,7 +167,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 1. CRIAR BANCO DE DADOS RDS
       - name: 🗄️ Create PostgreSQL Database
         id: create-db
         run: |
@@ -233,7 +227,6 @@ jobs:
           echo "RDS_ENDPOINT=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "📌 Database endpoint: $ENDPOINT"
 
-      # 2. CRIAR CLUSTER ECS
       - name: 🐳 Create ECS Cluster
         run: |
           echo "🐳 Creating ECS cluster..."
@@ -244,7 +237,55 @@ jobs:
           
           echo "✅ ECS cluster created: ${{ env.ECS_CLUSTER }}-${{ github.run_id }}"
 
-      # 3. CRIAR TASK DEFINITION
+      - name: 🛠️ Create ECS Task Execution Role
+        id: create-role
+        run: |
+          echo "🛠️ Creating/verifying ECS task execution role..."
+          
+          # Verificar se a role já existe
+          ROLE_NAME="ecsTaskExecutionRole-${{ github.run_id }}"
+          
+          if aws iam get-role --role-name $ROLE_NAME 2>/dev/null; then
+            echo "✅ Role already exists"
+          else
+            echo "📝 Creating new role..."
+            
+            # Criar trust policy para ECS
+            cat > trust-policy.json << TRUSTEOF
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": "ecs-tasks.amazonaws.com"
+                  },
+                  "Action": "sts:AssumeRole"
+                }
+              ]
+            }
+            TRUSTEOF
+            
+            # Criar a role
+            aws iam create-role \
+              --role-name $ROLE_NAME \
+              --assume-role-policy-document file://trust-policy.json \
+              --description "ECS Task Execution Role for Auto-Destroy demo" \
+              --tags Key=Project,Value=Academic Key=AutoDestroy,Value=true Key=RunId,Value=${{ github.run_id }}
+            
+            # Anexar a política padrão do ECS
+            aws iam attach-role-policy \
+              --role-name $ROLE_NAME \
+              --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+            
+            echo "✅ Role created: $ROLE_NAME"
+          fi
+          
+          # Obter ARN da role
+          ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text)
+          echo "ROLE_ARN=$ROLE_ARN" >> $GITHUB_OUTPUT
+          echo "Role ARN: $ROLE_ARN"
+
       - name: 📄 Create Task Definition
         id: create-task
         env:
@@ -259,7 +300,7 @@ jobs:
           {
             "family": "auth-task-${{ github.run_id }}",
             "networkMode": "awsvpc",
-            "executionRoleArn": "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+            "executionRoleArn": "${{ steps.create-role.outputs.ROLE_ARN }}",
             "containerDefinitions": [
               {
                 "name": "${{ env.CONTAINER_NAME }}",
@@ -320,7 +361,8 @@ jobs:
           EOF
           
           echo "Task definition content:"
-          cat task-definition.json
+          # Ocultar senha no log para segurança
+          sed 's/postgres:[^@]*@/postgres:******@/g' task-definition.json
           
           # Registrar task definition
           TASK_ARN=$(aws ecs register-task-definition \
@@ -328,10 +370,9 @@ jobs:
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           
-          echo "TASK_ARN=$TASK_ARN" >> $GITHUB_ENV
+          echo "TASK_ARN=$TASK_ARN" >> $GITHUB_OUTPUT  # ⬅️ CORREÇÃO AQUI!
           echo "✅ Task definition registered: $TASK_ARN"
 
-      # 4. CRIAR SECURITY GROUP
       - name: 🛡️ Create Security Group
         id: create-sg
         run: |
@@ -366,7 +407,7 @@ jobs:
           echo "✅ Security group created: $SG_ID"
           echo "Port 1337 opened to public"
 
-      # 5. CRIAR SERVICE NO ECS
+
       - name: 🚀 Create ECS Service
         run: |
           echo "🚀 Creating ECS service..."
@@ -386,7 +427,7 @@ jobs:
           aws ecs create-service \
             --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} \
             --service-name ${{ env.ECS_SERVICE }} \
-            --task-definition ${{ env.TASK_ARN }} \
+            --task-definition ${{ steps.create-task.outputs.TASK_ARN }} \
             --desired-count 1 \
             --launch-type FARGATE \
             --platform-version "LATEST" \
@@ -395,7 +436,6 @@ jobs:
           
           echo "✅ ECS service created: ${{ env.ECS_SERVICE }}"
 
-      # 6. AGUARDAR SERVIÇO INICIAR
       - name: ⏳ Wait for service to start
         run: |
           echo "⏳ Waiting for service to start (up to 3 minutes)..."
@@ -421,7 +461,6 @@ jobs:
             sleep 10
           done
 
-      # 7. OBTER IP PÚBLICO
       - name: 🌐 Get Public IP
         id: get-ip
         run: |
@@ -481,7 +520,6 @@ jobs:
             echo "⚠️ Service URL not available yet"
           fi
 
-      # 8. AGENDAR DESTRUIÇÃO AUTOMÁTICA (5 minutos)
       - name: ⏰ Schedule Auto-Destruction
         run: |
           echo "⏰ Scheduling auto-destruction in 5 minutes..."
@@ -563,7 +601,6 @@ jobs:
           echo "🕒 Will execute at: $(date -d '+5 minutes' '+%H:%M:%S')"
           echo "📁 Log file: /tmp/destroy-log-${{ github.run_id }}.txt"
 
-      # 9. RESUMO DO DEPLOYMENT
       - name: 📊 Deployment Summary
         run: |
           echo "========================================"
@@ -601,6 +638,14 @@ jobs:
           echo "   • Security Group: ${{ steps.create-sg.outputs.SG_ID }}"
           echo ""
           echo "========================================"
+
+      - name: 🧹 Cleanup on failure
+        if: failure()
+        run: |
+          echo "🧹 Cleaning up due to failure..."
+          # Tenta limpar o que foi criado
+          aws ecs delete-service --cluster ${{ env.ECS_CLUSTER }}-${{ github.run_id }} --service ${{ env.ECS_SERVICE }} --force 2>/dev/null || true
+          aws rds delete-db-instance --db-instance-identifier ${{ env.RDS_INSTANCE }} --skip-final-snapshot 2>/dev/null || true
 
   # ============================================
   # JOB 4: Status Final - Todos os Checks
