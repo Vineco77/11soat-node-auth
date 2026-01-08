@@ -380,6 +380,7 @@ jobs:
             "family": "auth-task-${{ github.run_id }}",
             "networkMode": "awsvpc",
             "executionRoleArn": "${{ steps.create-role.outputs.ROLE_ARN }}",
+            "taskRoleArn": "${{ steps.create-role.outputs.ROLE_ARN }}",
             "containerDefinitions": [
               {
                 "name": "${{ env.CONTAINER_NAME }}",
