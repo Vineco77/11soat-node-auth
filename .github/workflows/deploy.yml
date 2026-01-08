@@ -1,9 +1,9 @@
 name: Deploy to AWS ECS with Auto-Destroy
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [main]
+
 env:
   AWS_REGION: "us-east-1"
   ECR_REPOSITORY: "auth-service"
@@ -14,44 +14,10 @@ env:
 
 jobs:
   # ============================================
-  # JOB 1: Verificar se foi MERGE
-  # ============================================
-  check-merge:
-    name: 🔍 Check Merge Status
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.base.ref == 'main'
-    runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
-      pr_title: ${{ github.event.pull_request.title }}
-      merged_by: ${{ github.event.pull_request.merged_by.login }}
-
-    steps:
-      - name: 📋 Verify if PR was merged
-        id: check
-        run: |
-          echo "PR Action: ${{ github.event.action }}"
-          echo "PR Merged: ${{ github.event.pull_request.merged }}"
-          echo "PR Title: ${{ github.event.pull_request.title }}"
-
-          if [[ "${{ github.event.pull_request.merged }}" == "true" && 
-                "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
-            echo "✅✅✅ PR WAS MERGED INTO MAIN - DEPLOYMENT WILL RUN"
-            echo "Merged by: ${{ github.event.pull_request.merged_by.login }}"
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌❌❌ SKIPPING DEPLOY - Not a merge into main"
-            echo "should_deploy=false" >> $GITHUB_OUTPUT
-          fi
-
-  # ============================================
-  # JOB 2: Build Docker Image
+  # JOB 1: Build Docker Image
   # ============================================
   build-docker:
     name: 🐳 Build & Push Docker Image
-    needs: check-merge
-    if: needs.check-merge.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.build.outputs.image_tag }}
@@ -66,15 +32,13 @@ jobs:
       - name: 🎉 Deployment trigger info
         run: |
           echo "========================================"
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "🎉 AUTOMATED DEPLOYMENT AFTER PR MERGE"
-            echo "PR: ${{ needs.check-merge.outputs.pr_title }}"
-            echo "Merged by: ${{ needs.check-merge.outputs.merged_by }}"
-          else
-            echo "🎮 MANUAL DEPLOYMENT"
-            echo "Triggered by: ${{ github.actor }}"
-          fi
-          echo "Run ID: ${{ github.run_id }}"
+          echo "🚀 PRODUCTION DEPLOYMENT - MAIN BRANCH"
+          echo "========================================"
+          echo "📌 Branch: main"
+          echo "📌 Commit: ${{ github.sha }}"
+          echo "📌 Author: ${{ github.actor }}"
+          echo "📌 Message: ${{ github.event.head_commit.message }}"
+          echo "📌 Run ID: ${{ github.run_id }}"
           echo "========================================"
 
       - name: 🔐 Configure AWS credentials
@@ -125,7 +89,7 @@ jobs:
           echo "ecr_registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
 
   # ============================================
-  # JOB 3: Deploy na AWS
+  # JOB 2: Deploy na AWS
   # ============================================
   deploy-aws:
     name: 🚀 Deploy to AWS ECS
