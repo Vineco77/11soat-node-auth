@@ -1,6 +1,6 @@
 # 🔐 Auth Service - Microserviço de Autenticação.
 
-[![Coverage](https://img.shields.io/badge/coverage-99.61%25-brightgreen.svg)](./coverage/lcov-report/index.html)
+[![Code Coverage](https://img.shields.io/badge/coverage-97.16%25-brightgreen)](https://sonarcloud.io/summary/new_code?id=Luckmenez_11soat-node-orders)
 [![NestJS](https://img.shields.io/badge/NestJS-10.0-red.svg)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.0-2D3748.svg)](https://www.prisma.io/)
@@ -26,7 +26,7 @@ Microserviço de autenticação desenvolvido com NestJS, que pode ser utilizado 
 
 ### Microsserviço Auth Service
 
-**Cobertura Total: 99.61%**
+**Cobertura Total: 97.16%**
 
 | Métrica | Cobertura | Status |
 |---------|-----------|--------|
@@ -440,6 +440,5 @@ Este projeto foi desenvolvido como parte do trabalho acadêmico da FIAP - Fase 4
 ---
 
 **Collections para testes**: [Collection Auth](https://drive.google.com/file/d/1ttZMUOixYpXEVzg344jcZqjLcuhfRCHy/view?usp=sharing)  
-
 
 **Desenvolvido com ❤️**
