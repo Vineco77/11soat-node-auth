@@ -16,3 +16,4 @@ dist/*
 coverage/
 *.lcov
 .nyc_output/
+.scannerwork
