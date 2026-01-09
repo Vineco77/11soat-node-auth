@@ -26,7 +26,7 @@ Microserviço de autenticação desenvolvido com NestJS, que pode ser utilizado 
 
 ### Microsserviço Auth Service
 
-**Cobertura Total: 99.61%**
+**Cobertura Total: 97.16%**
 
 | Métrica | Cobertura | Status |
 |---------|-----------|--------|
