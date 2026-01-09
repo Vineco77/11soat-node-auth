@@ -439,4 +439,7 @@ Este projeto foi desenvolvido como parte do trabalho acadêmico da FIAP - Fase 4
 
 ---
 
+**Collections para testes**: [Collection Auth](https://drive.google.com/file/d/1ttZMUOixYpXEVzg344jcZqjLcuhfRCHy/view?usp=sharing)  
+
+
 **Desenvolvido com ❤️**
