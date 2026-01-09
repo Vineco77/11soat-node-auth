@@ -1,6 +1,6 @@
 # 🔐 Auth Service - Microserviço de Autenticação.
 
-[![Code Coverage](https://img.shields.io/badge/coverage-97.16%25-brightgreen)](https://sonarcloud.io/summary/new_code?id=Luckmenez_11soat-node-orders)
+[![Code Coverage](https://img.shields.io/badge/coverage-99.77%25-brightgreen)](https://sonarcloud.io/summary/overall?id=Vineco77_11soat-node-auth&branch=main)
 [![NestJS](https://img.shields.io/badge/NestJS-10.0-red.svg)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.0-2D3748.svg)](https://www.prisma.io/)
