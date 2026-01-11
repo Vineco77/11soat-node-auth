@@ -6,61 +6,61 @@ import { UserRepositoryInterface } from '../ports/output/repositories/user.repos
 import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../../domain/errors/app.error';
 
-// @Injectable()
-// export class CreateJwtUseCase {
-//   constructor(
-//     @Inject('JwtServiceInterface')
-//     private readonly jwtService: JwtServiceInterface,
-//     @Inject('UserRepositoryInterface')
-//     private readonly userRepository: UserRepositoryInterface,
-//   ) {}
+@Injectable()
+export class CreateJwtUseCase {
+  constructor(
+    @Inject('JwtServiceInterface')
+    private readonly jwtService: JwtServiceInterface,
+    @Inject('UserRepositoryInterface')
+    private readonly userRepository: UserRepositoryInterface,
+  ) {}
 
-//   async execute(cpf?: string, name?: string, email?: string): Promise<{ token: string }> {
-//     if (!cpf || cpf.trim() === '') {
-//       return this.generateClientToken(name, email);
-//     }
+  async execute(cpf?: string, name?: string, email?: string): Promise<{ token: string }> {
+    if (!cpf || cpf.trim() === '') {
+      return this.generateClientToken(name, email);
+    }
 
-//     if (!this.isValidCpfFormat(cpf)) {
-//       throw AppError.badRequest({
-//         message: 'Invalid CPF format. CPF must have exactly 11 numeric digits',
-//         details: `Received: ${cpf}`
-//       });
-//     }
+    if (!this.isValidCpfFormat(cpf)) {
+      throw AppError.badRequest({
+        message: 'Invalid CPF format. CPF must have exactly 11 numeric digits',
+        details: `Received: ${cpf}`
+      });
+    }
 
-//     const employee = await this.userRepository.findByCpf(cpf);
+    const employee = await this.userRepository.findByCpf(cpf);
     
-//     const userType = employee ? 'funcionario' : 'cliente';
+    const userType = employee ? 'funcionario' : 'cliente';
     
-//     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
-//       sub: cpf, 
-//       cpf,
-//       user_type: userType,
-//       ...(name && { name }),
-//       ...(email && { email }),
-//     };
+    const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
+      sub: cpf, 
+      cpf,
+      user_type: userType,
+      ...(name && { name }),
+      ...(email && { email }),
+    };
 
-//     const token = await this.jwtService.createToken(payload);
+    const token = await this.jwtService.createToken(payload);
     
-//     return { token };
-//   }
+    return { token };
+  }
 
-//   private async generateClientToken(name?: string, email?: string): Promise<{ token: string }> {
-//     const temporaryId = `client_${uuidv4()}`;
+  private async generateClientToken(name?: string, email?: string): Promise<{ token: string }> {
+    const temporaryId = `client_${uuidv4()}`;
     
-//     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
-//       sub: temporaryId, 
-//       cpf: '', 
-//       user_type: 'cliente',
-//       ...(name && { name }),
-//       ...(email && { email }),
-//     };
+    const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
+      sub: temporaryId, 
+      cpf: '', 
+      user_type: 'cliente',
+      ...(name && { name }),
+      ...(email && { email }),
+    };
 
-//     const token = await this.jwtService.createToken(payload);
+    const token = await this.jwtService.createToken(payload);
     
-//     return { token };
-//   }
+    return { token };
+  }
 
-//   private isValidCpfFormat(cpf: string): boolean {
-//     return /^\d{11}$/.test(cpf);
-//   }
-// }
+  private isValidCpfFormat(cpf: string): boolean {
+    return /^\d{11}$/.test(cpf);
+  }
+}
