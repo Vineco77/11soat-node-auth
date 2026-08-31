@@ -442,3 +442,6 @@ Este projeto foi desenvolvido como parte do trabalho acadêmico da FIAP - Fase 4
 **Collections para testes**: [Collection Auth](https://drive.google.com/file/d/1ttZMUOixYpXEVzg344jcZqjLcuhfRCHy/view?usp=sharing)  
 
 **Desenvolvido com ❤️**
+
+
+<!-- Security scan triggered at 2026-08-31 18:24:16 -->
